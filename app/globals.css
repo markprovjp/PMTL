@@ -1,27 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 25% 98%;
+    --foreground: 0 0% 20%;
+
+    --card: 0 10% 95%;
+    --card-foreground: 0 0% 20%;
+
+    --popover: 0 10% 95%;
+    --popover-foreground: 0 0% 20%;
+
+    --primary: 43 90% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 10% 90%;
+    --secondary-foreground: 0 0% 30%;
+
+    --muted: 30 8% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 43 70% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 10% 85%;
+    --input: 30 10% 85%;
+    --ring: 43 90% 38%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 10% 96%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-primary: 43 90% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 10% 90%;
+    --sidebar-accent-foreground: 0 0% 30%;
+    --sidebar-border: 30 10% 85%;
+    --sidebar-ring: 43 90% 38%;
+
+    /* Custom tokens */
+    --gold: 43 90% 38%;
+    --gold-dim: 43 55% 32%;
+    --gold-glow: 43 80% 50%;
+    --cream: 0 25% 98%;
+    --zen-dark: 0 0% 10%;
+    --zen-surface: 0 10% 93%;
+    --zen-border: 30 10% 82%;
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+
+    --shadow-gold: 0 4px 30px -8px hsl(43 90% 38% / 0.15);
+    --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.12);
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 88%;
+
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 88%;
+
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 88%;
+
+    --primary: 46 66% 52%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 70%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 50%;
+
+    --accent: 46 50% 42%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 46 66% 52%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 70%;
+    --sidebar-primary: 46 66% 52%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 70%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 46 66% 52%;
+
+    /* Custom tokens */
+    --gold: 46 66% 52%;
+    --gold-dim: 46 40% 38%;
+    --gold-glow: 46 80% 62%;
+    --cream: 0 0% 88%;
+    --zen-dark: 0 0% 10%;
+    --zen-surface: 0 0% 13%;
+    --zen-border: 0 0% 22%;
+
+    --shadow-gold: 0 4px 30px -8px hsl(46 66% 52% / 0.15);
+    --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.5);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: 18px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+
+  .text-gold-dim {
+    color: hsl(var(--gold-dim));
+  }
+
+  .bg-zen-surface {
+    background-color: hsl(var(--zen-surface));
+  }
+
+  .border-zen {
+    border-color: hsl(var(--zen-border));
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(var(--gold-dim)), hsl(var(--gold)), hsl(var(--gold-glow)));
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(135deg, hsl(var(--gold-dim)), hsl(var(--gold)), hsl(var(--gold-glow)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .zen-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--gold-dim) / 0.4), transparent);
   }
 }

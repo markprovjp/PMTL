@@ -65,16 +65,19 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
         )}
         <div className="pb-4 mb-2 border-b border-border space-y-0.5">
           {[
-            { label: "Radio", href: "/radio" },
-            { label: "Video", href: "/videos" },
-            { label: "Thư Viện", href: "/library" },
-            { label: "Blog", href: "/blog" },
-            { label: "Sơ Học", href: "/beginner-guide" },
+            { label: "Trang Chủ", href: "/" },
+            { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
+            { label: "Thư Viện Kinh Văn", href: "/library" },
+            { label: "Chương Trình Radio", href: "/radio" },
+            { label: "Video Khai Thị", href: "/videos" },
+            { label: "Blog Phật Pháp", href: "/blog" },
             { label: "Hỏi Đáp", href: "/qa" },
+            { label: "Câu Chuyện Đồng Tu", href: "/testimonials" },
             { label: "Lịch Tu Học", href: "/lunar-calendar" },
-            { label: "Sự Kiện", href: "/events" },
-            { label: "Quán Âm Dương", href: "/directory" },
-            { label: "Hỗ Trợ Phật Pháp", href: "/donations" },
+            { label: "Sự Kiện & Pháp Hội", href: "/events" },
+            { label: "Danh Bạ Toàn Cầu", href: "/directory" },
+            { label: "Hộ Trì Phật Pháp", href: "/donations" },
+            { label: "Chia Sẻ Cảm Ngộ", href: "/shares" },
           ].map((link) => (
             <Link key={link.href} href={link.href} onClick={onClose}
               className="block py-2.5 px-2 text-sm text-foreground hover:text-gold transition-colors rounded-lg hover:bg-secondary">
@@ -107,6 +110,23 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout, loading } = useAuth();
+  
+  const navLinks = [
+    { label: "Trang Chủ", href: "/" },
+    { label: "Hướng Dẫn", href: "/beginner-guide" },
+    { label: "Thư Viện", href: "/library" },
+    { label: "Radio", href: "/radio" },
+    { label: "Video", href: "/videos" },
+    { label: "Blog", href: "/blog" },
+    { label: "Hỏi Đáp", href: "/qa" },
+    { label: "Câu Chuyện", href: "/testimonials" },
+    { label: "Lịch Tu", href: "/lunar-calendar" },
+    { label: "Sự Kiện", href: "/events" },
+    { label: "Danh Bạ", href: "/directory" },
+    { label: "Hộ Trì", href: "/donations" },
+    { label: "Chia Sẻ", href: "/shares" },
+  ];
+
   return (
     <header className="sticky top-0 z-40">
       {/* Primary bar */}
@@ -116,20 +136,6 @@ const Header = () => {
             <Image src="/images/logoo.png" alt="Phap Mon Tam Linh" width={48} height={48} className="h-12 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-1 mr-2">
-              {[
-                { label: "Radio", href: "/radio" },
-                { label: "Video", href: "/videos" },
-              { label: "Thư Viện", href: "/library" },
-              { label: "Sơ Học", href: "/beginner-guide" },
-              { label: "Hỏi Đáp", href: "/qa" },
-              { label: "Sự Kiện", href: "/events" },
-              ].map((link) => (
-                <Link key={link.href} href={link.href} className="px-2.5 py-1 text-xs text-muted-foreground hover:text-gold transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
             <ThemeToggle />
             <Link href="/search" className="p-2 text-muted-foreground hover:text-gold transition-colors">
               <SearchIcon />
@@ -156,7 +162,7 @@ const Header = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-500"
+                        className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50"
                       >
                         <div className="p-2 border-b border-border">
                           <p className="text-xs text-foreground px-2 py-1 truncate">{user.email}</p>
@@ -190,31 +196,29 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Secondary bar */}
-      <div className="hidden md:block bg-card/95 backdrop-blur-md border-b border-border">
+      {/* Secondary bar - comprehensive menu */}
+      <div className="hidden md:block bg-card/50 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-6">
-          <nav className="flex items-center justify-center gap-1">
+          <div className="flex items-center justify-between gap-2 flex-wrap min-h-12">
             <button
               onClick={() => setCategoryOpen(!categoryOpen)}
-              className={`relative px-5 py-3.5 font-body text-sm tracking-wide transition-colors flex items-center gap-1.5 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-foreground"}`}
+              className={`relative px-4 py-2.5 font-body text-xs tracking-wide transition-colors flex items-center gap-1.5 flex-shrink-0 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-foreground"}`}
             >
-              Chu De
+              Chủ Đề
               <motion.span animate={{ rotate: categoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
-              {categoryOpen && <motion.div layoutId="activeTab" className="absolute bottom-0 left-2 right-2 h-0.5 gold-gradient rounded-full" />}
             </button>
-            {[
-              { label: "Blog", href: "/blog" },
-              { label: "Khai Thị", href: "/khai-thi" },
-              { label: "Kinh Điển", href: "/category/kinh-dien" },
-              { label: "Pháp Học", href: "/category/phap-hoc" },
-              { label: "Hỏi Đáp", href: "/category/hoi-dap" },
-              { label: "Cảm Ngộ", href: "/category/cam-ngo" },
-            ].map((link) => (
-              <Link key={link.href} href={link.href} className="px-5 py-3.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+            <nav className="flex items-center gap-0 flex-wrap flex-1">
+              {navLinks.map((link) => (
+                <Link 
+                  key={link.href} 
+                  href={link.href} 
+                  className="px-3 py-2.5 text-xs text-muted-foreground hover:text-gold transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -241,7 +245,7 @@ const Header = () => {
         {mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} />}
       </AnimatePresence>
 
-      {userMenuOpen && <div className="fixed inset-0 z-30" onClick={() => setUserMenuOpen(false)} />}
+      {userMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />}
     </header>
   );
 };

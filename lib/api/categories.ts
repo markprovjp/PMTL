@@ -5,13 +5,12 @@
 import { strapiFetch } from '@/lib/strapi'
 import type { Category, CategoryTree, StrapiList } from '@/types/strapi'
 
-/** Fetch flat list of all active categories */
+/** Fetch flat list of all categories */
 export async function getCategories(): Promise<Category[]> {
   try {
     const res = await strapiFetch<StrapiList<Category>>('/categories', {
-      filters: { is_active: { $eq: true } },
       sort: ['order:asc', 'name:asc'],
-      populate: ['thumbnail', 'parent'],
+      populate: ['parent'],
       pagination: { page: 1, pageSize: 200 },
       next: { revalidate: 300, tags: ['categories'] },
     })
@@ -25,8 +24,8 @@ export async function getCategories(): Promise<Category[]> {
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   try {
     const res = await strapiFetch<StrapiList<Category>>('/categories', {
-      filters: { slug: { $eq: slug }, is_active: { $eq: true } },
-      populate: ['thumbnail', 'parent', 'parent.parent'],
+      filters: { slug: { $eq: slug } },
+      populate: ['parent', 'parent.parent'],
       pagination: { page: 1, pageSize: 1 },
       next: { revalidate: 300, tags: [`category-${slug}`] },
     })

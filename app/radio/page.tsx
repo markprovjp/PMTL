@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { SearchIcon, PlayIcon } from "@/components/icons/ZenIcons";
@@ -24,21 +25,21 @@ const HeadphonesIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 interface Episode { id: number; title: string; date: string; category: string; duration: string; description: string; tags: string[]; isFeatured?: boolean; listenerCount: number; }
 
-const categories = ["Tất cả","Phật Học Vấn Đáp","Huyền Nghệ Tổng Thuật","Bạch Thoại Phật Pháp","Khai Thị & Giáo Huấn","Siêu Độ & Ngôi Nhà Nhỏ","Sức Khỏe & Bệnh Tật","Hôn Nhân & Gia Đình","Sự Nghiệp & Tài Vận","Phóng Sinh & Phát Nguyện"];
+const categories = ["Tất cả", "Phật Học Vấn Đáp", "Huyền Nghệ Tổng Thuật", "Bạch Thoại Phật Pháp", "Khai Thị & Giáo Huấn", "Siêu Độ & Ngôi Nhà Nhỏ", "Sức Khỏe & Bệnh Tật", "Hôn Nhân & Gia Đình", "Sự Nghiệp & Tài Vận", "Phóng Sinh & Phát Nguyện"];
 
 const episodes: Episode[] = [
-  { id: 1, title: "Bạch Thoại Phật Pháp Kỳ 91: Lập Thân Thập Giới, Nhân Thành Phật Thành", date: "2026-02-20", category: "Bạch Thoại Phật Pháp", duration: "45:20", description: "Sư Phụ giảng giải mười giới luật để lập thân, khi người tu hành giữ được giới luật thì con đường thành Phật không còn xa.", tags: ["giới luật","tu tâm","đạo đức"], isFeatured: true, listenerCount: 28540 },
-  { id: 2, title: "Phật Học Vấn Đáp: Cách Niệm Kinh Cho Người Mới Bắt Đầu", date: "2026-02-18", category: "Phật Học Vấn Đáp", duration: "38:15", description: "Hướng dẫn chi tiết cách tụng niệm cho người mới tu học.", tags: ["niệm kinh","sơ học","hướng dẫn"], listenerCount: 45230 },
-  { id: 3, title: "Huyền Nghệ: Giải Mộng — Mộng Thấy Người Đã Khuất Ý Nghĩa Gì?", date: "2026-02-15", category: "Huyền Nghệ Tổng Thuật", duration: "42:08", description: "Sư Phụ giải thích ý nghĩa tâm linh khi mộng thấy người đã qua đời.", tags: ["giải mộng","siêu độ","huyền học"], isFeatured: true, listenerCount: 52180 },
-  { id: 4, title: "Khai Thị: Tâm Từ Bi Là Nền Tảng Của Mọi Sự Tu Hành", date: "2026-02-12", category: "Khai Thị & Giáo Huấn", duration: "35:42", description: "Không có từ bi thì không có tu hành.", tags: ["từ bi","tu tâm","khai thị"], listenerCount: 31200 },
-  { id: 5, title: "Vấn Đáp: Cách Hóa Giải Oán Kết Vợ Chồng Bằng Phật Pháp", date: "2026-02-10", category: "Hôn Nhân & Gia Đình", duration: "41:55", description: "Vợ chồng bất hòa là do oán kết tiền kiếp. Cách niệm Giải Kết Chú.", tags: ["hôn nhân","oán kết","giải kết chú"], listenerCount: 67890 },
-  { id: 6, title: "Siêu Độ: Hướng Dẫn Chi Tiết Niệm Ngôi Nhà Nhỏ Cho Người Thân", date: "2026-02-08", category: "Siêu Độ & Ngôi Nhà Nhỏ", duration: "50:30", description: "Bài giảng chi tiết nhất về Ngôi Nhà Nhỏ: cách viết, niệm, đốt, hồi hướng.", tags: ["ngôi nhà nhỏ","siêu độ","hướng dẫn"], isFeatured: true, listenerCount: 89450 },
-  { id: 7, title: "Bạch Thoại Phật Pháp Kỳ 90: Tu Giác Chánh Tịnh, Thực Hành Đại Thừa", date: "2026-02-05", category: "Bạch Thoại Phật Pháp", duration: "48:12", description: "Giác ngộ, chánh kiến, thanh tịnh — ba yếu tố cốt lõi.", tags: ["đại thừa","chánh kiến","tu tập"], listenerCount: 25600 },
-  { id: 8, title: "Sức Khỏe: Ung Thư Và Nghiệp Lực — Phương Pháp Hóa Giải", date: "2026-02-02", category: "Sức Khỏe & Bệnh Tật", duration: "55:18", description: "Mối liên hệ giữa nghiệp chướng và bệnh ung thư.", tags: ["bệnh tật","ung thư","nghiệp chướng"], listenerCount: 76340 },
-  { id: 9, title: "Phóng Sinh: Nghi Thức Phóng Sinh Chuẩn Và Hồi Hướng Đúng Pháp", date: "2026-01-28", category: "Phóng Sinh & Phát Nguyện", duration: "33:45", description: "Hướng dẫn toàn bộ quy trình phóng sinh.", tags: ["phóng sinh","nghi thức","hồi hướng"], listenerCount: 43200 },
-  { id: 10, title: "Sự Nghiệp: Cầu Tài Lộc Và Vượt Qua Khó Khăn Tài Chính", date: "2026-01-25", category: "Sự Nghiệp & Tài Vận", duration: "40:10", description: "Phước đức và nghiệp lực ảnh hưởng thế nào đến tài vận?", tags: ["sự nghiệp","tài lộc","chuẩn đề"], listenerCount: 58900 },
-  { id: 11, title: "Khai Thị Đặc Biệt: Lời Nhắn Nhủ Cuối Cùng Của Sư Phụ Đến Đồng Tu", date: "2026-01-20", category: "Khai Thị & Giáo Huấn", duration: "62:30", description: "Bài giảng đặc biệt cảm động, Sư Phụ nhắn nhủ đồng tu hãy tinh tấn tu hành.", tags: ["khai thị","sư phụ","tinh tấn"], isFeatured: true, listenerCount: 120300 },
-  { id: 12, title: "Vấn Đáp: Con Cái Khó Dạy — Nghiệp Chướng Từ Tiền Kiếp?", date: "2026-01-18", category: "Hôn Nhân & Gia Đình", duration: "37:22", description: "Con cái bất hiếu, khó dạy là oán kết từ tiền kiếp.", tags: ["con cái","nghiệp chướng","gia đình"], listenerCount: 41500 },
+  { id: 1, title: "Bạch Thoại Phật Pháp Kỳ 91: Lập Thân Thập Giới, Nhân Thành Phật Thành", date: "2026-02-20", category: "Bạch Thoại Phật Pháp", duration: "45:20", description: "Sư Phụ giảng giải mười giới luật để lập thân, khi người tu hành giữ được giới luật thì con đường thành Phật không còn xa.", tags: ["giới luật", "tu tâm", "đạo đức"], isFeatured: true, listenerCount: 28540 },
+  { id: 2, title: "Phật Học Vấn Đáp: Cách Niệm Kinh Cho Người Mới Bắt Đầu", date: "2026-02-18", category: "Phật Học Vấn Đáp", duration: "38:15", description: "Hướng dẫn chi tiết cách tụng niệm cho người mới tu học.", tags: ["niệm kinh", "sơ học", "hướng dẫn"], listenerCount: 45230 },
+  { id: 3, title: "Huyền Nghệ: Giải Mộng — Mộng Thấy Người Đã Khuất Ý Nghĩa Gì?", date: "2026-02-15", category: "Huyền Nghệ Tổng Thuật", duration: "42:08", description: "Sư Phụ giải thích ý nghĩa tâm linh khi mộng thấy người đã qua đời.", tags: ["giải mộng", "siêu độ", "huyền học"], isFeatured: true, listenerCount: 52180 },
+  { id: 4, title: "Khai Thị: Tâm Từ Bi Là Nền Tảng Của Mọi Sự Tu Hành", date: "2026-02-12", category: "Khai Thị & Giáo Huấn", duration: "35:42", description: "Không có từ bi thì không có tu hành.", tags: ["từ bi", "tu tâm", "khai thị"], listenerCount: 31200 },
+  { id: 5, title: "Vấn Đáp: Cách Hóa Giải Oán Kết Vợ Chồng Bằng Phật Pháp", date: "2026-02-10", category: "Hôn Nhân & Gia Đình", duration: "41:55", description: "Vợ chồng bất hòa là do oán kết tiền kiếp. Cách niệm Giải Kết Chú.", tags: ["hôn nhân", "oán kết", "giải kết chú"], listenerCount: 67890 },
+  { id: 6, title: "Siêu Độ: Hướng Dẫn Chi Tiết Niệm Ngôi Nhà Nhỏ Cho Người Thân", date: "2026-02-08", category: "Siêu Độ & Ngôi Nhà Nhỏ", duration: "50:30", description: "Bài giảng chi tiết nhất về Ngôi Nhà Nhỏ: cách viết, niệm, đốt, hồi hướng.", tags: ["ngôi nhà nhỏ", "siêu độ", "hướng dẫn"], isFeatured: true, listenerCount: 89450 },
+  { id: 7, title: "Bạch Thoại Phật Pháp Kỳ 90: Tu Giác Chánh Tịnh, Thực Hành Đại Thừa", date: "2026-02-05", category: "Bạch Thoại Phật Pháp", duration: "48:12", description: "Giác ngộ, chánh kiến, thanh tịnh — ba yếu tố cốt lõi.", tags: ["đại thừa", "chánh kiến", "tu tập"], listenerCount: 25600 },
+  { id: 8, title: "Sức Khỏe: Ung Thư Và Nghiệp Lực — Phương Pháp Hóa Giải", date: "2026-02-02", category: "Sức Khỏe & Bệnh Tật", duration: "55:18", description: "Mối liên hệ giữa nghiệp chướng và bệnh ung thư.", tags: ["bệnh tật", "ung thư", "nghiệp chướng"], listenerCount: 76340 },
+  { id: 9, title: "Phóng Sinh: Nghi Thức Phóng Sinh Chuẩn Và Hồi Hướng Đúng Pháp", date: "2026-01-28", category: "Phóng Sinh & Phát Nguyện", duration: "33:45", description: "Hướng dẫn toàn bộ quy trình phóng sinh.", tags: ["phóng sinh", "nghi thức", "hồi hướng"], listenerCount: 43200 },
+  { id: 10, title: "Sự Nghiệp: Cầu Tài Lộc Và Vượt Qua Khó Khăn Tài Chính", date: "2026-01-25", category: "Sự Nghiệp & Tài Vận", duration: "40:10", description: "Phước đức và nghiệp lực ảnh hưởng thế nào đến tài vận?", tags: ["sự nghiệp", "tài lộc", "chuẩn đề"], listenerCount: 58900 },
+  { id: 11, title: "Khai Thị Đặc Biệt: Lời Nhắn Nhủ Cuối Cùng Của Sư Phụ Đến Đồng Tu", date: "2026-01-20", category: "Khai Thị & Giáo Huấn", duration: "62:30", description: "Bài giảng đặc biệt cảm động, Sư Phụ nhắn nhủ đồng tu hãy tinh tấn tu hành.", tags: ["khai thị", "sư phụ", "tinh tấn"], isFeatured: true, listenerCount: 120300 },
+  { id: 12, title: "Vấn Đáp: Con Cái Khó Dạy — Nghiệp Chướng Từ Tiền Kiếp?", date: "2026-01-18", category: "Hôn Nhân & Gia Đình", duration: "37:22", description: "Con cái bất hiếu, khó dạy là oán kết từ tiền kiếp.", tags: ["con cái", "nghiệp chướng", "gia đình"], listenerCount: 41500 },
 ];
 
 const platformLinks = [
@@ -66,7 +67,13 @@ export default function RadioPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Nghe giảng' }
+            ]}
+          />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-3">
               <MicIcon className="w-5 h-5 text-gold" />
               <p className="text-gold text-sm font-medium tracking-widest uppercase">Đài Phật Pháp</p>
@@ -176,7 +183,7 @@ export default function RadioPage() {
               <div className="p-5 rounded-xl bg-card border border-border">
                 <h3 className="text-sm font-medium text-foreground mb-4">Thống Kê</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {[{ label: "Bài Giảng", value: "3,200+" },{ label: "Giờ Phát Sóng", value: "3,000+" },{ label: "Người Nghe", value: "10M+" },{ label: "Quốc Gia", value: "50+" }].map((s) => (
+                  {[{ label: "Bài Giảng", value: "3,200+" }, { label: "Giờ Phát Sóng", value: "3,000+" }, { label: "Người Nghe", value: "10M+" }, { label: "Quốc Gia", value: "50+" }].map((s) => (
                     <div key={s.label} className="text-center p-3 rounded-lg bg-secondary"><p className="text-lg font-display text-gold">{s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
                   ))}
                 </div>
@@ -184,7 +191,7 @@ export default function RadioPage() {
               <div className="p-5 rounded-xl bg-card border border-border">
                 <h3 className="text-sm font-medium text-foreground mb-3">Chủ Đề Hot Tuần Này</h3>
                 <div className="space-y-2">
-                  {[{ topic: "Niệm Kinh Trị Bệnh", count: "12.5K" },{ topic: "Oán Kết Vợ Chồng", count: "9.8K" },{ topic: "Ngôi Nhà Nhỏ", count: "8.2K" },{ topic: "Phóng Sinh Giải Hạn", count: "7.1K" },{ topic: "Cầu Sự Nghiệp", count: "5.4K" }].map((t, i) => (
+                  {[{ topic: "Niệm Kinh Trị Bệnh", count: "12.5K" }, { topic: "Oán Kết Vợ Chồng", count: "9.8K" }, { topic: "Ngôi Nhà Nhỏ", count: "8.2K" }, { topic: "Phóng Sinh Giải Hạn", count: "7.1K" }, { topic: "Cầu Sự Nghiệp", count: "5.4K" }].map((t, i) => (
                     <div key={t.topic} className="flex items-center gap-3 py-2"><span className="text-xs text-gold/50 w-4">{i + 1}</span><span className="text-sm text-foreground flex-1">{t.topic}</span><span className="text-xs text-muted-foreground">{t.count}</span></div>
                   ))}
                 </div>
@@ -192,7 +199,7 @@ export default function RadioPage() {
               <div className="p-5 rounded-xl bg-card border border-border">
                 <h3 className="text-sm font-medium text-foreground mb-3">Liên Kết Nhanh</h3>
                 <div className="space-y-2">
-                  {[{ label: "Nghe Radio Trực Tiếp", href: "https://xinlingfamen.info/radio" },{ label: "Kênh YouTube Pháp Môn", href: "https://www.youtube.com/channel/UCuupstmJXSQBhUYr64R8BYQ" },{ label: "Apple Podcasts", href: "https://podcasts.apple.com/podcast/id1250342346" },{ label: "SoundCloud", href: "https://soundcloud.com/guanyincittadharma" }].map((l) => (
+                  {[{ label: "Nghe Radio Trực Tiếp", href: "https://xinlingfamen.info/radio" }, { label: "Kênh YouTube Pháp Môn", href: "https://www.youtube.com/channel/UCuupstmJXSQBhUYr64R8BYQ" }, { label: "Apple Podcasts", href: "https://podcasts.apple.com/podcast/id1250342346" }, { label: "SoundCloud", href: "https://soundcloud.com/guanyincittadharma" }].map((l) => (
                     <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="block text-sm text-muted-foreground hover:text-gold transition-colors">↗ {l.label}</a>
                   ))}
                 </div>

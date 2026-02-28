@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { HeartIcon } from "@/components/icons/ZenIcons";
@@ -79,8 +80,14 @@ export default function DonationsPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Hộ trì' }
+            ]}
+          />
           {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-12">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Liễm Tài — Không Lợi Dụng Tiền</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Hộ Trì Phật Pháp</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -203,9 +210,8 @@ export default function DonationsPage() {
                   {donationTiers.map((tier) => (
                     <div
                       key={tier.amount}
-                      className={`p-3 rounded-lg border ${
-                        tier.highlight ? "border-gold/30 bg-gold/5" : "border-border/50 bg-secondary/50"
-                      }`}
+                      className={`p-3 rounded-lg border ${tier.highlight ? "border-gold/30 bg-gold/5" : "border-border/50 bg-secondary/50"
+                        }`}
                     >
                       <p className={`text-sm font-medium ${tier.highlight ? "text-gold" : "text-foreground"}`}>
                         {tier.amount}

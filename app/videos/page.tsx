@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 
@@ -15,7 +16,7 @@ const PlayCircleIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 interface Video { id: string; title: string; titleCn: string; description: string; youtubeId: string; category: string; duration: string; views: string; date: string; }
 
-const categories = ["Tất cả","Nhân Quả Hiện Tiền","Khai Thị Đại Pháp","Pháp Hội Thế Giới","Bạch Thoại Phật Pháp","Phóng Sinh & Từ Thiện"];
+const categories = ["Tất cả", "Nhân Quả Hiện Tiền", "Khai Thị Đại Pháp", "Pháp Hội Thế Giới", "Bạch Thoại Phật Pháp", "Phóng Sinh & Từ Thiện"];
 
 const videos: Video[] = [
   { id: "1", title: "Người Ngồi Xe Lăn 7 Năm Đứng Dậy Đi Lại", titleCn: "坐轮椅7年站起来", description: "Câu chuyện chấn động: Một người đàn ông ngồi xe lăn suốt 7 năm đã kỳ diệu đứng dậy đi lại.", youtubeId: "f-UKk3THR3Y", category: "Nhân Quả Hiện Tiền", duration: "12:34", views: "2.3M", date: "2024-05-15" },
@@ -39,7 +40,13 @@ export default function VideosPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Video' }
+            ]}
+          />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">因果现前 — Nhân Quả Hiện Tiền</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Video Khai Thị & Đồ Đằng</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Xem nghiệp lực hiện tiền trước mắt. Những video chấn động tâm linh từ Sư Phụ Lư Quân Hoành.</p>
@@ -94,7 +101,7 @@ export default function VideosPage() {
 
           <div className="mt-12 text-center">
             <a href="https://www.youtube.com/channel/UCuupstmJXSQBhUYr64R8BYQ?sub_confirmation=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium transition-colors">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98" fill="white"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" /><polygon points="9.75 15.02 15.5 12 9.75 8.98" fill="white" /></svg>
               Xem Thêm Trên YouTube
             </a>
           </div>

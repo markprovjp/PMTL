@@ -4,46 +4,110 @@
 // ─────────────────────────────────────────────────────────────
 
 import { strapiFetch } from '@/lib/strapi'
-import type { BlogPost, StrapiList, StrapiSingle, BlogCategory } from '@/types/strapi'
+import type { BlogPost, StrapiList, StrapiSingle, Category } from '@/types/strapi'
+
+/** Shared populate config for all post queries */
+const POPULATE_FULL = [
+  'thumbnail',
+  'gallery',
+  'seo',
+  'categories',
+]
+
+/** Lightweight populate for list views */
+const POPULATE_LIST = ['thumbnail', 'gallery', 'categories']
 
 export interface GetPostsOptions {
   page?: number
   pageSize?: number
-  category?: BlogCategory
+  categorySlug?: string
   search?: string
+  source?: string
+  featured?: boolean
+  language?: 'vi' | 'zh'
+  /** Date string like '2026-02-01T00:00:00Z' */
+  dateFrom?: string
+  /** Date string like '2026-03-01T00:00:00Z' */
+  dateTo?: string
   /** revalidate interval in seconds — default 60 */
   revalidate?: number
+  /** Force bypass all caches */
+  noCache?: boolean
 }
 
 /** Get paginated list of published blog posts */
 export async function getPosts(options: GetPostsOptions = {}): Promise<StrapiList<BlogPost>> {
-  const { page = 1, pageSize = 10, category, search, revalidate = 60 } = options
+  const { page = 1, pageSize = 10, categorySlug, search, source, featured, language, dateFrom, dateTo, revalidate = 60 } = options
 
   const filters: Record<string, unknown> = {}
-  if (category) filters['category'] = { $eq: category }
   if (search) {
     filters['$or'] = [
       { title: { $containsi: search } },
-      { excerpt: { $containsi: search } },
+      { content: { $containsi: search } },
+      { source: { $containsi: search } },
+      { original_title: { $containsi: search } },
     ]
   }
+  if (categorySlug) {
+    filters['categories'] = { slug: { $eq: categorySlug } }
+  }
+  if (source) {
+    filters['source'] = { $containsi: source }
+  }
+  if (featured !== undefined) {
+    filters['featured'] = { $eq: featured }
+  }
 
-  return strapiFetch<StrapiList<BlogPost>>('/blog-posts', {
-    sort: ['publishedAt:desc'],
-    filters,
-    pagination: { page, pageSize },
-    populate: ['thumbnail', 'seo'],
-    next: { revalidate, tags: ['blog-posts'] },
-  })
+  if (dateFrom || dateTo) {
+    const publishedAtFilter: Record<string, string> = {}
+    if (dateFrom) publishedAtFilter['$gte'] = dateFrom
+    if (dateTo) publishedAtFilter['$lte'] = dateTo
+    filters['publishedAt'] = publishedAtFilter
+  }
+
+  if (language) {
+    // Note: If language is removed from schema, this will be ignored by Strapi or throw error
+  }
+
+  try {
+    console.log('[Blog] Starting getPosts')
+    console.log('[Blog]   Options:', { page, pageSize, search, language, revalidate })
+    console.log('[Blog]   Populate fields:', POPULATE_LIST)
+
+    const result = await strapiFetch<StrapiList<BlogPost>>('/blog-posts', {
+      sort: ['publishedAt:desc'],
+      filters,
+      pagination: { page, pageSize },
+      populate: POPULATE_LIST,
+      noCache: options.noCache || revalidate === 0,
+      next: { revalidate, tags: ['blog-posts'] },
+    })
+
+    console.log('[Blog] getPosts completed successfully')
+    console.log('[Blog]   Data items:', result.data?.length ?? 0)
+    console.log('[Blog]   Total:', result.meta?.pagination?.total ?? 'unknown')
+    console.log('[Blog]   Pagination:', result.meta?.pagination)
+
+    return result
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    const stack = err instanceof Error ? err.stack : ''
+    console.error('[Blog] getPosts FAILED')
+    console.error('[Blog]   Error:', msg)
+    console.error('[Blog]   Stack:', stack)
+    console.error('[Blog]   Full error:', err)
+    throw err
+  }
 }
 
 /** Get a single blog post by slug */
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   const res = await strapiFetch<StrapiList<BlogPost>>('/blog-posts', {
     filters: { slug: { $eq: slug } },
-    populate: ['thumbnail', 'seo', 'seo.metaImage'],
+    populate: POPULATE_FULL,
     pagination: { page: 1, pageSize: 1 },
-    next: { revalidate: 300, tags: [`blog-post-${slug}`] },
+    noCache: true, // Force fresh for now to debug views
+    next: { revalidate: 0, tags: [`blog-post-${slug}`] },
   })
 
   return res.data[0] ?? null
@@ -53,7 +117,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 export async function getPostById(documentId: string): Promise<BlogPost | null> {
   try {
     const res = await strapiFetch<StrapiSingle<BlogPost>>(`/blog-posts/${documentId}`, {
-      populate: ['thumbnail', 'seo', 'seo.metaImage'],
+      populate: POPULATE_FULL,
       next: { revalidate: 300, tags: [`blog-post-${documentId}`] },
     })
     return res.data
@@ -74,19 +138,86 @@ export async function getAllPostSlugs(): Promise<string[]> {
   return res.data.map((p) => p.slug)
 }
 
-/** Increment view count for a post (server action) */
-export async function incrementPostViews(documentId: string, currentViews: number): Promise<void> {
-  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL ?? 'http://localhost:1337'
-  const token = process.env.STRAPI_API_TOKEN
-  if (!token) return
+/**
+ * Check if a post with the same source already exists.
+ * Returns the existing post if found.
+ */
+export async function checkDuplicatePost(
+  source: string,
+  excludeDocumentId?: string
+): Promise<BlogPost | null> {
+  try {
+    const filters: Record<string, unknown> = {
+      source: { $eq: source },
+    }
+    if (excludeDocumentId) {
+      filters['documentId'] = { $ne: excludeDocumentId }
+    }
+    const res = await strapiFetch<StrapiList<BlogPost>>('/blog-posts', {
+      filters,
+      populate: ['thumbnail'],
+      pagination: { page: 1, pageSize: 1 },
+      next: { revalidate: 0 },
+    })
+    return res.data[0] ?? null
+  } catch {
+    return null
+  }
+}
 
-  await fetch(`${strapiUrl}/api/blog-posts/${documentId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ data: { views: currentViews + 1 } }),
+/** Get related posts for a given post (same category, different slug) */
+export async function getRelatedPosts(post: BlogPost, limit = 4): Promise<BlogPost[]> {
+  try {
+    const filters: Record<string, unknown> = {
+      slug: { $ne: post.slug },
+    }
+    if (post.categories && post.categories.length > 0) {
+      filters['categories'] = { slug: { $in: post.categories.map(c => c.slug) } }
+    }
+    const res = await strapiFetch<StrapiList<BlogPost>>('/blog-posts', {
+      filters,
+      sort: ['publishedAt:desc'],
+      pagination: { page: 1, pageSize: limit },
+      populate: POPULATE_LIST,
+      next: { revalidate: 300 },
+    })
+    return res.data
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Increment view count for a post.
+ * Calls the custom /view endpoint on Strapi which performs an atomic DB increment,
+ * avoiding race conditions that occur when multiple readers write back currentViews+1.
+ * No auth token required — the endpoint is public by design.
+ */
+export async function incrementPostViews(documentId: string): Promise<void> {
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL ?? 'http://localhost:1337'
+
+  await fetch(`${strapiUrl}/api/blog-posts/${documentId}/view`, {
+    method: 'POST',
     cache: 'no-store',
-  }).catch(() => {}) // fire-and-forget
+  }).catch(() => { }) // fire-and-forget
+}
+
+/**
+ * Fetch all categories with parent relations populated.
+ * Returns flat list; client can build tree using parent/children relations.
+ * Note: Strapi draftAndPublish is disabled for Category, so all entries shown.
+ */
+export async function getCategories(): Promise<Category[]> {
+  try {
+    const res = await strapiFetch<StrapiList<Category>>('/categories', {
+      sort: ['order:asc', 'name:asc'],
+      populate: ['parent'],
+      pagination: { page: 1, pageSize: 1000 },
+      next: { revalidate: 3600, tags: ['categories'] },
+    })
+    return res.data ?? []
+  } catch (err) {
+    console.error('Failed to fetch categories:', err)
+    return []
+  }
 }

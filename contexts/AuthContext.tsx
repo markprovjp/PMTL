@@ -17,9 +17,9 @@ export interface AuthUser {
   blocked: boolean
   createdAt: string
   updatedAt: string
-  // extended fields (if added in Strapi)
-  fullName?: string
-  avatar?: { url: string } | null
+  // Các trường mở rộng (khai báo trong schema extension)
+  fullName?: string | null
+  avatar_url?: string | null
   phone?: string | null
   address?: string | null
   bio?: string | null
@@ -39,9 +39,9 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   token: null,
   loading: true,
-  login: () => {},
-  logout: () => {},
-  refetch: async () => {},
+  login: () => { },
+  logout: () => { },
+  refetch: async () => { },
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -51,11 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchMe = useCallback(async (jwt: string) => {
     try {
-      const res = await fetch(`${STRAPI_URL}/api/users/me`, {
-        headers: { Authorization: `Bearer ${jwt}` },
-      })
+      // Populate các trường mở rộng khi lấy thông tin user
+      const res = await fetch(
+        `${STRAPI_URL}/api/users/me?populate=*`,
+        { headers: { Authorization: `Bearer ${jwt}` } }
+      )
       if (!res.ok) throw new Error('token invalid')
-      const data: AuthUser = await res.json()
+      const data = await res.json()
+
+      // CHUẨN HÓA DỮ LIỆU: Nếu avatar_url trả về từ Strapi là Media Object, lấy url
+      if (data.avatar_url && typeof data.avatar_url === 'object') {
+        data.avatar_url = data.avatar_url.url.startsWith('http')
+          ? data.avatar_url.url
+          : `${STRAPI_URL}${data.avatar_url.url}`;
+      }
+
       setUser(data)
       setToken(jwt)
     } catch {

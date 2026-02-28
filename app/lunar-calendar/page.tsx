@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 
@@ -78,8 +79,14 @@ export default function LunarCalendarPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Lịch tu' }
+            ]}
+          />
           {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Năm Ất Tỵ 2025</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4 flex items-center justify-center gap-3">
               <MoonIcon className="w-8 h-8 text-gold" />
@@ -97,9 +104,8 @@ export default function LunarCalendarPage() {
               <div className="flex flex-wrap gap-2 mb-6">
                 <button
                   onClick={() => setSelectedType(null)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    !selectedType ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!selectedType ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   Tất Cả
                 </button>
@@ -107,9 +113,8 @@ export default function LunarCalendarPage() {
                   <button
                     key={key}
                     onClick={() => setSelectedType(selectedType === key ? null : key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      selectedType === key ? color : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedType === key ? color : "bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     {label}
                   </button>
@@ -123,9 +128,8 @@ export default function LunarCalendarPage() {
                     <button
                       key={m}
                       onClick={() => setSelectedMonth(i)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
-                        selectedMonth === i ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
-                      }`}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${selectedMonth === i ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
                     >
                       {m}
                     </button>

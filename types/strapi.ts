@@ -72,20 +72,19 @@ export interface StrapiSEO {
 
 // ─── Category ─────────────────────────────────────────────────
 
-/** Hierarchical category — parent/child tree structure */
+/** Category with hierarchical tree support — can have parent/children */
 export interface Category {
   id: number
   documentId: string
   name: string
   slug: string
-  description: string | null
-  icon: string | null           // emoji or text icon e.g. "📖"
-  color: string | null          // hex color for UI accents
-  order: number                 // display order among siblings
+  description: string | null       // rich text — ghi chú cho admin
+  color: string | null             // hex color for UI accents
+  order: number                     // display order among siblings
   is_active: boolean
-  parent: Category | null       // self-relation — null means root
-  children?: Category[]         // populated client-side when building tree
-  thumbnail: StrapiMedia | null
+  parent: Category | null           // self-relation — null means root category
+  children: Category[] | null       // child categories (populated client-side)
+  blog_posts: BlogPost[] | null     // posts that belong to this category (not populated by default)
   publishedAt: string | null
   createdAt: string
   updatedAt: string
@@ -97,19 +96,7 @@ export interface CategoryTree extends Category {
   depth: number
 }
 
-// ─── BlogPost ────────────────────────────────────────────────
-
-export type BlogCategory =
-  | 'phap-hoc'
-  | 'hoi-dap'
-  | 'cam-ngo'
-  | 'kinh-dien'
-  | 'thien-dinh'
-  | 'tu-hoc'
-  | 'van-hoa'
-  | 'doi-song'
-  | 'su-kien'
-  | 'tin-tuc'
+// BlogCategory is removed as we now use true relations
 
 /** BlogPost entity (Strapi v5 flat format) */
 export interface BlogPost {
@@ -118,34 +105,29 @@ export interface BlogPost {
   title: string
   slug: string
   content: string
-  excerpt: string
-  /** Legacy string category enum (kept for backwards compat) */
-  category: BlogCategory
-  /** Relation to Category content type (dynamic tree) */
-  category_rel: Category | null
+  /** Original link to the source if available */
+  original_link: string | null
+  /** Many-to-many: one post can have multiple topic categories */
+  categories: Category[] | null
   tags: string[] | null
-  author: string
   thumbnail: StrapiMedia | null
-  video_url: string | null      // YouTube / embed URL
+  gallery: StrapiMedia[] | null      // additional images
+  video_url: string | null           // YouTube / embed URL
+  audio_url: string | null           // audio player URL
   views: number
+  likes: number
 
-  // ── Source tracking (wenda / shuohua references) ──
-  /**
-   * Type of dharma source:
-   *   wenda   = Q&A session  (問答 — "wenda")
-   *   shuohua = Dharma talk  (說話 — "shuohua")
-   */
-  source_type: 'wenda' | 'shuohua' | 'other' | null
-  /**
-   * Date code portion: e.g. "wenda20140829" or "shuohua20140829"
-   * Used for deduplication + filtering
-   */
-  source_code: string | null
-  /**
-   * Timestamp within the session: e.g. "42:22"
-   * Combined with source_code forms a unique reference key
-   */
-  source_time: string | null
+  // ── Publishing ──────────────────────────────────────────
+  status: 'draft' | 'published' | 'archived'
+  featured: boolean                  // pin to top
+  original_title: string | null      // Chinese title for bilingual posts
+
+  // ── Source tracking ────────
+  /** Consistently formatted source e.g. "wenda20140829 42:22" */
+  source: string | null
+
+  // ── Related content ─────────────────────────────────────
+  related_posts: BlogPost[] | null
 
   seo: StrapiSEO | null
   publishedAt: string | null
@@ -153,10 +135,26 @@ export interface BlogPost {
   updatedAt: string
 }
 
-/** Unique deduplication key for a post — source_code + source_time */
-export function getSourceKey(post: Pick<BlogPost, 'source_code' | 'source_time'>): string | null {
-  if (!post.source_code) return null
-  return post.source_time ? `${post.source_code}@${post.source_time}` : post.source_code
+export interface BeginnerGuide {
+  id: number
+  documentId: string
+  title: string
+  description: string | null
+  content: string | null // rich text
+  duration: string | null
+  order: number
+  images: StrapiMedia[] | null
+  publishedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Site title/SEO settings */
+export interface StrapiSEO {
+  id: number
+  metaTitle: string | null
+  metaDescription: string | null
+  metaImage: StrapiMedia | null
 }
 
 // ─── Settings ────────────────────────────────────────────────

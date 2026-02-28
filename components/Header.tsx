@@ -11,19 +11,85 @@ import CategoryNav, { CategoryNavMobile } from "@/components/CategoryNav";
 
 const UserIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
   </svg>
 );
 
 const ChevronDown = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m6 9 6 6 6-6"/>
+    <path d="m6 9 6 6 6-6" />
   </svg>
+);
+
+const NavDropdown = ({ label, items, isOpen, onToggle, onClose }: {
+  label: string;
+  items: { label: string; href: string }[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) => (
+  <div className="relative group">
+    <button
+      onClick={onToggle}
+      className={`px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${isOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
+    >
+      {label}
+      <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
+    </button>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 mt-1 w-48 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-40"
+          >
+            <div className="p-1">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className="block px-4 py-2 text-xs text-muted-foreground hover:text-gold hover:bg-secondary rounded-lg transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  </div>
 );
 
 const MobileMenu = ({ onClose }: { onClose: () => void }) => {
   const { user, logout } = useAuth();
-  const [catOpen, setCatOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  const sections = [
+    {
+      id: 'tu-hoc',
+      label: "Tu Học",
+      items: [
+        { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
+        { label: "Lịch Tu Học", href: "/lunar-calendar" },
+        { label: "Hỏi Đáp Phật Học", href: "/qa" },
+        { label: "Danh Bạ Toàn Cầu", href: "/directory" },
+      ]
+    },
+    {
+      id: 'cong-dong',
+      label: "Cộng Đồng",
+      items: [
+        { label: "Chứng Nghiệm & Chia Sẻ", href: "/shares" },
+        { label: "Sự Kiện & Pháp Hội", href: "/events" },
+      ]
+    },
+  ];
 
   return (
     <motion.div
@@ -35,7 +101,14 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
     >
       <div className="flex items-center justify-between p-6 border-b border-border">
         <Link href="/" onClick={onClose} className="flex items-center gap-2">
-          <Image src="/images/logoo.png" alt="Phap Mon Tam Linh" width={40} height={40} className="h-10 w-auto object-contain" />
+          <Image
+            src="/images/logoo.png"
+            alt="Phap Mon Tam Linh"
+            width={160}
+            height={50}
+            className="h-10 w-auto object-contain"
+            unoptimized
+          />
         </Link>
         <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground">
           <CloseIcon />
@@ -43,7 +116,7 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
       </div>
       <nav className="p-6 space-y-2">
         {user ? (
-          <div className="flex items-center justify-between py-3 mb-2 border-b border-border">
+          <div className="flex items-center justify-between py-3 mb-4 border-b border-border">
             <Link href="/profile" onClick={onClose} className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center">
                 <span className="font-display text-sm text-gold">{(user.fullName || user.username)[0].toUpperCase()}</span>
@@ -53,102 +126,150 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
                 <p className="text-xs text-muted-foreground">Xem hồ sơ</p>
               </div>
             </Link>
-            <button onClick={() => { logout(); onClose(); }} className="text-xs text-red-400 hover:text-red-300 transition-colors">
-              Đăng xuất
-            </button>
+            <button onClick={() => { logout(); onClose(); }} className="text-xs text-red-400">Đăng xuất</button>
           </div>
         ) : (
-          <Link href="/auth" onClick={onClose} className="flex items-center justify-center gap-2 w-full py-3 mb-4 border border-gold/50 text-gold hover:bg-gold/10 rounded-lg transition-all text-sm font-medium">
-            <UserIcon />
-            Đăng nhập / Đăng ký
+          <Link href="/auth" onClick={onClose} className="flex items-center justify-center gap-2 w-full py-3 mb-6 border border-gold/50 text-gold rounded-lg text-sm font-medium">
+            <UserIcon /> Đăng nhập / Đăng ký
           </Link>
         )}
-        <div className="pb-4 mb-2 border-b border-border space-y-0.5">
-          {[
-            { label: "Trang Chủ", href: "/" },
-            { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
-            { label: "Thư Viện Kinh Văn", href: "/library" },
-            { label: "Chương Trình Radio", href: "/radio" },
-            { label: "Video Khai Thị", href: "/videos" },
-            { label: "Blog Phật Pháp", href: "/blog" },
-            { label: "Hỏi Đáp", href: "/qa" },
-            { label: "Câu Chuyện Đồng Tu", href: "/testimonials" },
-            { label: "Lịch Tu Học", href: "/lunar-calendar" },
-            { label: "Sự Kiện & Pháp Hội", href: "/events" },
-            { label: "Danh Bạ Toàn Cầu", href: "/directory" },
-            { label: "Hộ Trì Phật Pháp", href: "/donations" },
-            { label: "Chia Sẻ Cảm Ngộ", href: "/shares" },
-          ].map((link) => (
-            <Link key={link.href} href={link.href} onClick={onClose}
-              className="block py-2.5 px-2 text-sm text-foreground hover:text-gold transition-colors rounded-lg hover:bg-secondary">
-              {link.label}
-            </Link>
-          ))}
-        </div>
-        <div>
-          <button onClick={() => setCatOpen(!catOpen)} className="w-full flex items-center justify-between py-4 text-left font-display text-lg text-foreground">
-            Chủ Đề
-            <motion.span animate={{ rotate: catOpen ? 180 : 0 }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </motion.span>
+
+        <Link href="/" onClick={onClose} className="block py-3 px-2 text-base font-display text-foreground border-b border-border/50">
+          Trang Chủ
+        </Link>
+
+        {sections.map((s) => (
+          <div key={s.id} className="border-b border-border/50">
+            <button
+              onClick={() => setOpenSection(openSection === s.id ? null : s.id)}
+              className="w-full flex items-center justify-between py-4 px-2 text-left font-display text-base text-foreground"
+            >
+              {s.label}
+              <motion.span animate={{ rotate: openSection === s.id ? 180 : 0 }}><ChevronDown /></motion.span>
+            </button>
+            <AnimatePresence>
+              {openSection === s.id && (
+                <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden pl-4 pb-2">
+                  {s.items.map((item) => (
+                    <Link key={item.href} href={item.href} onClick={onClose} className="block py-2.5 text-sm text-muted-foreground hover:text-gold">
+                      {item.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+
+        <div className="border-b border-border/50">
+          <button onClick={() => setOpenSection(openSection === 'khai-thi' ? null : 'khai-thi')} className="w-full flex items-center justify-between py-4 px-2 text-left font-display text-base text-gold">
+            Khai Thị (Chủ đề)
+            <motion.span animate={{ rotate: openSection === 'khai-thi' ? 180 : 0 }}><ChevronDown /></motion.span>
           </button>
           <AnimatePresence>
-            {catOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden pl-2">
+            {openSection === 'khai-thi' && (
+              <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden pb-4">
                 <CategoryNavMobile onClose={onClose} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        <Link href="/donations" onClick={onClose} className="block py-4 px-2 text-base font-display text-foreground">
+          Hộ Trì Phật Pháp
+        </Link>
       </nav>
     </motion.div>
   );
 };
 
 const Header = () => {
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout, loading } = useAuth();
-  
-  const navLinks = [
-    { label: "Trang Chủ", href: "/" },
-    { label: "Hướng Dẫn", href: "/beginner-guide" },
-    { label: "Thư Viện", href: "/library" },
-    { label: "Radio", href: "/radio" },
-    { label: "Video", href: "/videos" },
-    { label: "Blog", href: "/blog" },
-    { label: "Hỏi Đáp", href: "/qa" },
-    { label: "Câu Chuyện", href: "/testimonials" },
-    { label: "Lịch Tu", href: "/lunar-calendar" },
-    { label: "Sự Kiện", href: "/events" },
-    { label: "Danh Bạ", href: "/directory" },
-    { label: "Hộ Trì", href: "/donations" },
-    { label: "Chia Sẻ", href: "/shares" },
-  ];
+
+  const groups = {
+    tuHoc: [
+      { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
+      { label: "Lịch Tu Học", href: "/lunar-calendar" },
+      { label: "Hỏi Đáp Phật Học", href: "/qa" },
+      { label: "Danh Bạ Toàn Cầu", href: "/directory" },
+    ],
+    congDong: [
+      { label: "Chứng Nghiệm & Chia Sẻ", href: "/shares" },
+      { label: "Sự Kiện & Pháp Hội", href: "/events" },
+    ]
+  };
 
   return (
-    <header className="sticky top-0 z-40">
-      {/* Primary bar */}
-      <div className="bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50">
+      <div className="relative z-[60] bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-6 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <Image src="/images/logoo.png" alt="Phap Mon Tam Linh" width={48} height={48} className="h-12 w-auto object-contain" />
-          </Link>
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <Image
+                src="/images/logoo.png"
+                alt="Phap Mon Tam Linh"
+                width={200}
+                height={60}
+                className="h-12 w-auto object-contain"
+                unoptimized
+                priority
+              />
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              <Link href="/" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+                Trang Chủ
+              </Link>
+
+              <Link href="/blog" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+                Khai Thị (Blog)
+              </Link>
+
+              <NavDropdown
+                label="Tu Học"
+                items={groups.tuHoc}
+                isOpen={activeDropdown === 'tuHoc'}
+                onToggle={() => setActiveDropdown(activeDropdown === 'tuHoc' ? null : 'tuHoc')}
+                onClose={() => setActiveDropdown(null)}
+              />
+
+              <button
+                onClick={() => { setCategoryOpen(!categoryOpen); setActiveDropdown(null); }}
+                className={`px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
+              >
+                Khai Thị
+                <motion.span animate={{ rotate: categoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
+              </button>
+
+              <NavDropdown
+                label="Cộng Đồng"
+                items={groups.congDong}
+                isOpen={activeDropdown === 'congDong'}
+                onToggle={() => setActiveDropdown(activeDropdown === 'congDong' ? null : 'congDong')}
+                onClose={() => setActiveDropdown(null)}
+              />
+
+              <Link href="/donations" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+                Hộ Trì
+              </Link>
+            </nav>
+          </div>
+
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/search" className="p-2 text-muted-foreground hover:text-gold transition-colors">
               <SearchIcon />
             </Link>
 
-            {/* Desktop auth */}
             {!loading && (
               user ? (
                 <div className="relative hidden md:block">
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold/30 hover:border-gold/60 transition-all"
-                  >
+                  <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold/30 hover:border-gold/60 transition-all">
                     <div className="w-5 h-5 rounded-full bg-gold/20 flex items-center justify-center">
                       <span className="text-xs text-gold font-bold">{(user.fullName || user.username)[0].toUpperCase()}</span>
                     </div>
@@ -157,25 +278,11 @@ const Header = () => {
                   </button>
                   <AnimatePresence>
                     {userMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50"
-                      >
-                        <div className="p-2 border-b border-border">
-                          <p className="text-xs text-foreground px-2 py-1 truncate">{user.email}</p>
-                        </div>
+                      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-[100]">
+                        <div className="p-2 border-b border-border"><p className="text-xs text-foreground px-2 py-1 truncate">{user.email}</p></div>
                         <div className="p-1">
-                          <Link href="/profile" onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors">
-                            Hồ sơ của tôi
-                          </Link>
-                          <button onClick={() => { logout(); setUserMenuOpen(false); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-                            Đăng xuất
-                          </button>
+                          <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="block px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors">Hồ sơ của tôi</Link>
+                          <button onClick={() => { logout(); setUserMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">Đăng xuất</button>
                         </div>
                       </motion.div>
                     )}
@@ -183,8 +290,7 @@ const Header = () => {
                 </div>
               ) : (
                 <Link href="/auth" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gold/50 text-gold hover:bg-gold/10 rounded-full transition-all">
-                  <UserIcon />
-                  Đăng nhập
+                  <UserIcon /> Đăng nhập
                 </Link>
               )
             )}
@@ -196,56 +302,19 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Secondary bar - comprehensive menu */}
-      <div className="hidden md:block bg-card/50 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between gap-2 flex-wrap min-h-12">
-            <button
-              onClick={() => setCategoryOpen(!categoryOpen)}
-              className={`relative px-4 py-2.5 font-body text-xs tracking-wide transition-colors flex items-center gap-1.5 flex-shrink-0 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Chủ Đề
-              <motion.span animate={{ rotate: categoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
-            </button>
-            <nav className="flex items-center gap-0 flex-wrap flex-1">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.href} 
-                  href={link.href} 
-                  className="px-3 py-2.5 text-xs text-muted-foreground hover:text-gold transition-colors whitespace-nowrap"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-
-      {/* Category mega panel */}
       <AnimatePresence>
         {categoryOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-30 bg-black/20" onClick={() => setCategoryOpen(false)} />
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="relative z-40 overflow-hidden border-b border-border bg-card/98 backdrop-blur-md shadow-2xl"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setCategoryOpen(false)} />
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="absolute left-0 right-0 top-full z-[45] overflow-hidden border-b border-border bg-card shadow-2xl">
               <CategoryNav onClose={() => setCategoryOpen(false)} />
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} />}
-      </AnimatePresence>
-
-      {userMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />}
+      <AnimatePresence>{mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} />}</AnimatePresence>
+      {userMenuOpen && <div className="fixed inset-0 z-50" onClick={() => setUserMenuOpen(false)} />}
     </header>
   );
 };

@@ -4,7 +4,7 @@
 export interface Contribution {
   id: number;
   type: 'video' | 'story' | 'feedback'; // A, B, C
-  
+
   // Chung
   category: string;
   title?: string;
@@ -12,7 +12,7 @@ export interface Contribution {
   country: string;
   date: string; // "25/02/2026"
   excerpt: string;
-  
+
   // Loại A: Video
   videoThumbnail?: string;
   videoUrl?: string;
@@ -20,16 +20,16 @@ export interface Contribution {
   rating?: number; // 1-5 stars
   viewCount?: number;
   commentCount?: number;
-  
+
   // Loại B: Photo & Story
   coverImage?: string;
   fullContent?: string;
   likeCount?: number;
-  
+
   // Loại C: Feedback
   quote?: string;
   tags?: string[];
-  
+
   // Full story details (for modal)
   fullStory?: {
     problem?: string;
@@ -345,7 +345,63 @@ export const mockContributions: Contribution[] = [
     viewCount: 2900,
   },
 
-  // Add more as needed...
+  {
+    id: 17,
+    type: 'story',
+    category: 'Sự Nghiệp',
+    title: 'TÌM VIỆC LÀM Kỳ Diệu Tại Úc',
+    author: 'Chị Thị',
+    country: 'Úc',
+    date: '10/02/2026',
+    excerpt: 'Tìm việc từ đầu năm nhưng không có kết quả. Sau khi phóng sinh và niệm Chuẩn Đề Thần Chú, nhận được offer từ công ty lớn đúng thời điểm Sư Phụ dự báo.',
+    coverImage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop',
+    fullContent: `
+      <h3>Bồ Tát Ứng Nguyện Việc Làm</h3>
+      <p>Tôi là Chị Thị, đang sinh sống tại Úc. Tôi muốn chia sẻ về sự linh ứng khi cầu xin việc làm.</p>
+      <p>Suốt từ đầu năm 2024, tôi nộp đơn khắp nơi nhưng chỉ nhận được những lời từ chối. Tôi bắt đầu lo lắng và áp lực tài chính.</p>
+      <h4>Hành Trì Theo Pháp Môn</h4>
+      <p>Tôi được hướng dẫn phóng sinh 600 con cá và niệm Chuẩn Đề Thần Chú 108 biến mỗi ngày. Sư Phụ còn nói rằng muộn nhất tháng 4 tôi sẽ có việc.</p>
+      <p>Tôi thực hành rất thành tâm, gạt bỏ lo âu sang một bên.</p>
+      <h4>Kết Quả Bất Ngờ</h4>
+      <p>Đúng như lời Sư Phụ, giữa tháng 3 tôi nhận được cuộc gọi phỏng vấn từ một tập đoàn lớn. Chỉ sau 2 vòng, tôi nhận được offer với mức lương tốt hơn mong đợi.</p>
+      <p>Phật Pháp thật sự không bỏ rơi ai nếu chúng ta có lòng tin.</p>
+    `,
+    likeCount: 245,
+    viewCount: 1500,
+  },
+  {
+    id: 18,
+    type: 'feedback',
+    category: 'Tâm Linh',
+    author: 'Chị Lan Anh',
+    country: 'Úc',
+    date: '08/02/2026',
+    excerpt: 'Vượt qua ác mộng nhờ niệm kinh chuyên cần.',
+    quote: 'Thường xuyên gặp ác mộng, cảm giác nặng nề. Sau 1 tháng niệm Ngôi Nhà Nhỏ và Chú Đại Bi, ác mộng biến mất, cảm giác như nhấc được cả tấn nặng ra khỏi người.',
+    tags: ['#TâmLinh', '#NgôiNhàNhỏ', '#BìnhAn'],
+  },
+  {
+    id: 19,
+    type: 'video',
+    category: 'Sự Nghiệp',
+    title: 'HỒI SINH Từ Vực Thẳm Phá Sản',
+    author: 'Anh Văn Hùng',
+    country: 'Việt Nam',
+    date: '05/02/2026',
+    excerpt: 'Công ty phá sản, nợ nần chồng chất, gia đình tan vỡ. Sau 6 tháng tu học chuyên cần, trả hết nợ và gia đình đoàn tụ.',
+    videoThumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+    videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+    videoDuration: '22:15',
+    rating: 5,
+    viewCount: 4500,
+    commentCount: 220,
+    fullStory: {
+      problem: 'Công ty phá sản, nợ nần, vợ đòi ly hôn do áp lực tài chính quá lớn.',
+      solution: 'Phát nguyện ăn chay trường, niệm 108 Ngôi Nhà Nhỏ, phóng sinh 1000 con cá.',
+      result: 'Chỉ sau 6 tháng, các khoản nợ được giải quyết ổn thỏa, vợ quay về và cùng tu tập.',
+      timeframe: '6 tháng',
+    },
+  },
 ];
 
 // Categories list

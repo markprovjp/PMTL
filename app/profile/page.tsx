@@ -1,19 +1,22 @@
 'use client'
 // ─────────────────────────────────────────────────────────────
-//  /profile — User profile page
+//  /profile — Trang hồ sơ người dùng
+//  Hiển thị thông tin Google profile + cho phép chỉnh sửa
 // ─────────────────────────────────────────────────────────────
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import StickyBanner from '@/components/StickyBanner'
 import { useAuth } from '@/contexts/AuthContext'
+import Breadcrumbs from '@/components/Breadcrumbs'
+import { updateMe, uploadAvatarFile } from '@/lib/api/user'
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'
 
+// ─── Thành phần thẻ thống kê ───────────────────────────────
 const StatCard = ({ label, value }: { label: string; value: string | number }) => (
   <div className="bg-secondary rounded-xl p-4 text-center">
     <p className="text-2xl font-display text-gold font-bold">{value}</p>
@@ -21,6 +24,7 @@ const StatCard = ({ label, value }: { label: string; value: string | number }) =
   </div>
 )
 
+// ─── Thành phần hàng thông tin (chỉ đọc) ───────────────────
 const InfoRow = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="flex items-start gap-4 py-3 border-b border-border last:border-0">
     <span className="text-xs text-muted-foreground w-32 flex-shrink-0 pt-0.5">{label}</span>
@@ -28,47 +32,173 @@ const InfoRow = ({ label, value }: { label: string; value?: string | null }) => 
   </div>
 )
 
+// ─── Field nhập liệu ───────────────────────────────────────
+const Field = ({
+  label,
+  name,
+  value,
+  onChange,
+  multiline = false,
+}: {
+  label: string
+  name: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  multiline?: boolean
+}) => (
+  <div className="flex flex-col gap-1">
+    <label className="text-xs text-muted-foreground">{label}</label>
+    {multiline ? (
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={3}
+        className="rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold resize-none"
+      />
+    ) : (
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="rounded-lg bg-secondary border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-gold"
+      />
+    )}
+  </div>
+)
+
+// ─── Trang chính ───────────────────────────────────────────
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, loading, logout } = useAuth()
+  const { user, loading, logout, refetch } = useAuth()
 
+  // State form chỉnh sửa
+  const [form, setForm] = useState({
+    fullName: '',
+    dharmaName: '',
+    phone: '',
+    address: '',
+    bio: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [saveMssg, setSaveMssg] = useState<string | null>(null)
+
+  // State avatar
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Đồng bộ form khi user thay đổi
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth')
+    if (user) {
+      setForm({
+        fullName: user.fullName ?? '',
+        dharmaName: user.dharmaName ?? '',
+        phone: user.phone ?? '',
+        address: user.address ?? '',
+        bio: user.bio ?? '',
+      })
+      // Xác định avatar URL
+      const av = user.avatar_url
+        ? user.avatar_url.startsWith('http')
+          ? user.avatar_url
+          : `${STRAPI_URL}${user.avatar_url}`
+        : null
+      setAvatarPreview(av)
     }
+  }, [user])
+
+  // Redirect nếu chưa đăng nhập
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth')
   }, [user, loading, router])
 
-  if (loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
 
   if (!user) return null
 
-  const avatarUrl = user.avatar?.url
-    ? user.avatar.url.startsWith('http') ? user.avatar.url : `${STRAPI_URL}${user.avatar.url}`
-    : null
-
   const joinDate = new Date(user.createdAt).toLocaleDateString('vi-VN', {
-    year: 'numeric', month: 'long', day: 'numeric',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   })
 
+  // ─── Xử lý thay đổi form ──────────────────────────────────
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // ─── Lưu thông tin hồ sơ ─────────────────────────────────
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveMssg(null)
+    try {
+      await updateMe({
+        fullName: form.fullName || null,
+        dharmaName: form.dharmaName || null,
+        phone: form.phone || null,
+        address: form.address || null,
+        bio: form.bio || null,
+      })
+      await refetch()
+      setSaveMssg('Đã lưu thông tin!')
+    } catch (err) {
+      setSaveMssg('Lưu thất bại, thử lại.')
+      console.error(err)
+    } finally {
+      setSaving(false)
+      setTimeout(() => setSaveMssg(null), 3000)
+    }
+  }
+
+  // ─── Xử lý upload ảnh ─────────────────────────────────────────
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingAvatar(true)
+    try {
+      // 1. Tạo preview cục bộ bằng URL.createObjectURL để người dùng thấy ngay
+      const localUrl = URL.createObjectURL(file)
+      setAvatarPreview(localUrl)
+
+      // 2. Tải ảnh lên Strapi và lấy Media ID
+      const { id, url: remoteUrl } = await uploadAvatarFile(file)
+
+      // 3. Cập nhật User record trong DB bằng Media ID
+      await updateMe({ avatar_url: id })
+
+      // 4. Cập nhật lại UI với URL thật từ server
+      setAvatarPreview(remoteUrl)
+      await refetch()
+      setSaveMssg('Đã cập nhật ảnh đại diện!')
+    } catch (err) {
+      console.error('Lỗi upload avatar:', err)
+      setSaveMssg('Tải ảnh thất bại.')
+    } finally {
+      setUploadingAvatar(false)
+      setTimeout(() => setSaveMssg(null), 3000)
+    }
+  }
+
+  // ─── Chữ cái đại diện khi chưa có avatar ─────────────────
+  const initials = (user.fullName || user.username || user.email)[0]?.toUpperCase() ?? '?'
+
   return (
-    <div className="min-h-screen bg-background">
+    <div>
       <Header />
 
       <main className="py-12">
-        <div className="container mx-auto px-6 max-w-4xl">
+        <div className="container mx-auto px-6 max-w-3xl">
+          <Breadcrumbs items={[{ label: 'Hồ sơ cá nhân' }]} />
 
-          {/* Breadcrumb */}
-          <nav className="text-xs text-muted-foreground mb-8 flex items-center gap-2">
-            <Link href="/" className="hover:text-gold transition-colors">Trang chu</Link>
-            <span>/</span>
-            <span className="text-foreground">Ho so ca nhan</span>
-          </nav>
-
-          {/* Profile header card */}
+          {/* ── Profile header card ─────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -79,44 +209,68 @@ export default function ProfilePage() {
 
             <div className="px-6 pb-6">
               <div className="flex items-end justify-between -mt-12 mb-4">
-                {/* Avatar */}
-                <div className="relative">
-                  {avatarUrl ? (
+                {/* Avatar + nút upload */}
+                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  {/* Ảnh hoặc chữ đại diện */}
+                  {avatarPreview ? (
                     <Image
-                      src={avatarUrl}
+                      src={avatarPreview}
                       alt={user.username}
                       width={80}
                       height={80}
                       className="w-20 h-20 rounded-full border-4 border-card object-cover"
+                      unoptimized={avatarPreview.startsWith('blob:')}
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full border-4 border-card bg-gold/20 flex items-center justify-center">
-                      <span className="font-display text-2xl text-gold">
-                        {(user.fullName || user.username || user.email)[0].toUpperCase()}
-                      </span>
+                      <span className="font-display text-2xl text-gold">{initials}</span>
                     </div>
                   )}
+
+                  {/* Overlay hover */}
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    {uploadingAvatar ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Dấu xác thực */}
                   {user.confirmed && (
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-card flex items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 6 9 17l-5-5"/>
+                        <path d="M20 6 9 17l-5-5" />
                       </svg>
                     </div>
                   )}
+
+                  {/* Input file ẩn */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
                 </div>
 
-                {/* Actions */}
+                {/* Nút đăng xuất */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={logout}
                     className="px-4 py-2 text-xs border border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400 rounded-lg transition-all"
                   >
-                    Dang xuat
+                    Đăng xuất
                   </button>
                 </div>
               </div>
 
-              {/* Name + username */}
+              {/* Tên + username */}
               <h1 className="font-display text-2xl text-foreground">
                 {user.fullName || user.username}
               </h1>
@@ -126,63 +280,101 @@ export default function ProfilePage() {
               <p className="text-sm text-muted-foreground mt-0.5">@{user.username}</p>
 
               {user.bio && (
-                <p className="text-sm text-foreground/80 mt-3 leading-relaxed max-w-xl">
-                  {user.bio}
-                </p>
+                <p className="text-sm text-foreground/80 mt-3 leading-relaxed max-w-xl">{user.bio}</p>
               )}
 
-              {/* Meta info */}
+              {/* Meta */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                   Tham gia: {joinDate}
                 </span>
                 {user.address && (
                   <span className="flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
                     </svg>
                     {user.address}
                   </span>
                 )}
               </div>
+              <p className="text-[11px] text-muted-foreground mt-2 opacity-60">
+                Nhấn vào avatar để thay đổi ảnh
+              </p>
             </div>
           </motion.div>
 
-          {/* Stats row */}
+          {/* ── Stats ──────────────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             className="grid grid-cols-3 gap-4 mb-6"
           >
-            <StatCard label="Bai da doc" value={0} />
-            <StatCard label="Binh luan" value={0} />
-            <StatCard label="Yeu thich" value={0} />
+            <StatCard label="Bài đã đọc" value={0} />
+            <StatCard label="Bình luận" value={0} />
+            <StatCard label="Yêu thích" value={0} />
           </motion.div>
 
-          {/* Account info */}
+          {/* ── Thông tin tài khoản (đọc) ──────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card border border-border rounded-2xl p-6"
+            className="bg-card border border-border rounded-2xl p-6 mb-6"
           >
-            <h2 className="font-display text-lg text-foreground mb-4">Thong tin tai khoan</h2>
-            <InfoRow label="Ho va ten" value={user.fullName} />
-            <InfoRow label="Phap danh" value={user.dharmaName} />
+            <h2 className="font-display text-lg text-foreground mb-4">Thông tin tài khoản</h2>
+            <InfoRow label="Họ và tên" value={user.fullName} />
+            <InfoRow label="Pháp danh" value={user.dharmaName} />
             <InfoRow label="Email" value={user.email} />
-            <InfoRow label="So dien thoai" value={user.phone} />
-            <InfoRow label="Dia chi" value={user.address} />
-            <InfoRow label="Gioi thieu" value={user.bio} />
+            <InfoRow label="Số điện thoại" value={user.phone} />
+            <InfoRow label="Địa chỉ" value={user.address} />
+            <InfoRow label="Giới thiệu" value={user.bio} />
             <InfoRow
-              label="Trang thai"
-              value={user.confirmed ? 'Da xac thuc' : 'Chua xac thuc email'}
+              label="Trạng thái"
+              value={user.confirmed ? 'Đã xác thực' : 'Chưa xác thực email'}
             />
           </motion.div>
 
+          {/* ── Form chỉnh sửa ──────────────────────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-card border border-border rounded-2xl p-6"
+          >
+            <h2 className="font-display text-lg text-foreground mb-4">Chỉnh sửa hồ sơ</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Họ và tên" name="fullName" value={form.fullName} onChange={handleChange} />
+              <Field label="Pháp danh" name="dharmaName" value={form.dharmaName} onChange={handleChange} />
+              <Field label="Số điện thoại" name="phone" value={form.phone} onChange={handleChange} />
+              <Field label="Địa chỉ" name="address" value={form.address} onChange={handleChange} />
+              <div className="sm:col-span-2">
+                <Field label="Giới thiệu" name="bio" value={form.bio} onChange={handleChange} multiline />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 mt-6">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-5 py-2 bg-gold text-black text-sm font-medium rounded-lg hover:bg-gold/80 disabled:opacity-50 transition-all"
+              >
+                {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+              {saveMssg && (
+                <span className={`text-xs ${saveMssg.includes('thất bại') ? 'text-red-400' : 'text-green-400'}`}>
+                  {saveMssg}
+                </span>
+              )}
+            </div>
+          </motion.div>
         </div>
       </main>
 

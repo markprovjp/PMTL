@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { SearchIcon } from "@/components/icons/ZenIcons";
@@ -57,8 +58,14 @@ export default function QnAPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Hỏi đáp' }
+            ]}
+          />
           {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Kho Tri Thức Phật Pháp</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Hỏi Đáp Phật Học</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -88,9 +95,8 @@ export default function QnAPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    selectedCategory === cat ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedCategory === cat ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   {cat} ({count})
                 </button>

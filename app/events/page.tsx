@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { ArrowRightIcon } from "@/components/icons/ZenIcons";
@@ -29,7 +30,7 @@ const MapPinIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-interface Event { id: number; title: string; description: string; date: string; time: string; location: string; type: "dharma-talk"|"webinar"|"retreat"|"liberation"|"festival"; status: "upcoming"|"live"|"past"; link?: string; youtubeId?: string; speaker: string; language: string; }
+interface Event { id: number; title: string; description: string; date: string; time: string; location: string; type: "dharma-talk" | "webinar" | "retreat" | "liberation" | "festival"; status: "upcoming" | "live" | "past"; link?: string; youtubeId?: string; speaker: string; language: string; }
 
 const events: Event[] = [
   { id: 1, title: "Pháp Hội Malaysia 2025", description: "Pháp hội lớn thường niên tại Malaysia.", date: "15/03/2025", time: "09:00 - 17:00", location: "Kuala Lumpur Convention Centre, Malaysia", type: "dharma-talk", status: "upcoming", link: "https://www.guanyincitta.info", speaker: "Pháp Sư Lư Quân Hoành", language: "Tiếng Hoa (có phiên dịch)" },
@@ -57,7 +58,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function EventsPage() {
-  const [filter, setFilter] = useState<"all"|"upcoming"|"past">("all");
+  const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   const filtered = events.filter((e) => {
@@ -75,21 +76,27 @@ export default function EventsPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+          <Breadcrumbs
+            centered
+            items={[
+              { label: 'Sự kiện' }
+            ]}
+          />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Lịch Sự Kiện</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Pháp Hội & Sự Kiện</h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Tham gia các pháp hội, khóa tu, phóng sinh và bài giảng trực tuyến cùng cộng đồng toàn cầu.</p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            {[{ label: "Pháp Hội/Năm", value: "12+" },{ label: "Quốc Gia", value: "30+" },{ label: "Tham Dự", value: "100K+" },{ label: "Phóng Sinh/Năm", value: "50+" }].map((s) => (
+            {[{ label: "Pháp Hội/Năm", value: "12+" }, { label: "Quốc Gia", value: "30+" }, { label: "Tham Dự", value: "100K+" }, { label: "Phóng Sinh/Năm", value: "50+" }].map((s) => (
               <div key={s.label} className="p-4 rounded-xl bg-card border border-border text-center"><p className="text-xl font-display text-gold">{s.value}</p><p className="text-xs text-muted-foreground">{s.label}</p></div>
             ))}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="flex gap-2">
-              {(["all","upcoming","past"] as const).map((f) => (
+              {(["all", "upcoming", "past"] as const).map((f) => (
                 <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${filter === f ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
                   {f === "all" ? `Tất Cả (${events.length})` : f === "upcoming" ? `Sắp Tới (${upcoming.length})` : `Đã Qua (${past.length})`}
                 </button>

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Breadcrumbs from "@/components/Breadcrumbs";
+
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { SearchIcon, ArrowRightIcon } from "@/components/icons/ZenIcons";
@@ -52,7 +52,7 @@ export default function SearchPage() {
       setLoading(true);
       try {
         let dateFrom: string | undefined = undefined;
-        let dateTo: string | undefined = undefined;
+        const dateTo: string | undefined = undefined;
 
         if (activeTime === "week") {
           dateFrom = format(subDays(new Date(), 7), "yyyy-MM-dd'T'HH:mm:ssXX");
@@ -83,12 +83,7 @@ export default function SearchPage() {
       <Header />
       <main className="flex-1 py-16">
         <div className="container mx-auto px-6">
-          <Breadcrumbs
-            centered
-            items={[
-              { label: 'Tìm kiếm' }
-            ]}
-          />
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Tra cứu nhanh</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Kho Tàng Khai Thị</h1>

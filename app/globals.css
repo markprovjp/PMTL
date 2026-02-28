@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -54,8 +54,8 @@
     --zen-surface: 0 10% 93%;
     --zen-border: 30 10% 82%;
 
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-body: 'Inter', system-ui, sans-serif;
+    --font-display: "Playfair Display", Georgia, serif;
+    --font-body: "Be Vietnam Pro", system-ui, sans-serif;
 
     --shadow-gold: 0 4px 30px -8px hsl(43 90% 38% / 0.15);
     --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.12);
@@ -127,7 +127,12 @@
     font-family: var(--font-body);
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
   }
 }
@@ -166,11 +171,21 @@
   }
 
   .gold-gradient {
-    background: linear-gradient(135deg, hsl(var(--gold-dim)), hsl(var(--gold)), hsl(var(--gold-glow)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gold-dim)),
+      hsl(var(--gold)),
+      hsl(var(--gold-glow))
+    );
   }
 
   .gold-gradient-text {
-    background: linear-gradient(135deg, hsl(var(--gold-dim)), hsl(var(--gold)), hsl(var(--gold-glow)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gold-dim)),
+      hsl(var(--gold)),
+      hsl(var(--gold-glow))
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -178,6 +193,11 @@
 
   .zen-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--gold-dim) / 0.4), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--gold-dim) / 0.4),
+      transparent
+    );
   }
 }

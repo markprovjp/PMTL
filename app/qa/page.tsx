@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
-import Breadcrumbs from "@/components/Breadcrumbs";
+
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { SearchIcon } from "@/components/icons/ZenIcons";
@@ -58,12 +58,7 @@ export default function QnAPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <Breadcrumbs
-            centered
-            items={[
-              { label: 'Hỏi đáp' }
-            ]}
-          />
+
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Kho Tri Thức Phật Pháp</p>

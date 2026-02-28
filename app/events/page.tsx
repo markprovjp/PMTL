@@ -4,31 +4,23 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Breadcrumbs from "@/components/Breadcrumbs";
+
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
-import { ArrowRightIcon } from "@/components/icons/ZenIcons";
-
-const VideoCamIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
-    <polygon points="23 7 16 12 23 17 23 7" strokeLinecap="round" strokeLinejoin="round" />
-    <rect x="1" y="5" width="15" height="14" rx="2" strokeLinecap="round" />
-  </svg>
-);
-
-const ClockIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const MapPinIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-);
+import {
+  Sparkles,
+  Globe,
+  Heart,
+  Star,
+  Megaphone,
+  Languages,
+  Flower2,
+  Clock,
+  MapPin,
+  Video,
+  ChevronRight,
+  type LucideIcon
+} from "lucide-react";
 
 interface Event { id: number; title: string; description: string; date: string; time: string; location: string; type: "dharma-talk" | "webinar" | "retreat" | "liberation" | "festival"; status: "upcoming" | "live" | "past"; link?: string; youtubeId?: string; speaker: string; language: string; }
 
@@ -43,12 +35,12 @@ const events: Event[] = [
   { id: 8, title: "Phóng Sinh Tập Thể — Đài Bắc", description: "Phóng sinh lớn tại Taipei với hơn 1,000 thành viên.", date: "15/08/2024", time: "06:00 - 09:00", location: "Tamsui River, Taipei, Taiwan", type: "liberation", status: "past", speaker: "Quán Âm Đường Đài Bắc", language: "Tiếng Hoa" },
 ];
 
-const typeLabels: Record<string, { label: string; color: string; icon: string }> = {
-  "dharma-talk": { label: "Pháp Hội", color: "bg-red-500/10 text-red-400", icon: "prayer" },
-  "webinar": { label: "Trực Tuyến", color: "bg-blue-500/10 text-blue-400", icon: "globe" },
-  "retreat": { label: "Khóa Tu", color: "bg-purple-500/10 text-purple-400", icon: "meditation" },
-  "liberation": { label: "Phóng Sinh", color: "bg-green-500/10 text-green-400", icon: "heart" },
-  "festival": { label: "Lễ Hội", color: "bg-amber-500/10 text-amber-400", icon: "star" },
+const typeLabels: Record<string, { label: string; color: string; icon: LucideIcon }> = {
+  "dharma-talk": { label: "Pháp Hội", color: "bg-red-500/10 text-red-400", icon: Sparkles },
+  "webinar": { label: "Trực Tuyến", color: "bg-blue-500/10 text-blue-400", icon: Globe },
+  "retreat": { label: "Khóa Tu", color: "bg-purple-500/10 text-purple-400", icon: Flower2 },
+  "liberation": { label: "Phóng Sinh", color: "bg-green-500/10 text-green-400", icon: Heart },
+  "festival": { label: "Lễ Hội", color: "bg-amber-500/10 text-amber-400", icon: Star },
 };
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -76,12 +68,7 @@ export default function EventsPage() {
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <Breadcrumbs
-            centered
-            items={[
-              { label: 'Sự kiện' }
-            ]}
-          />
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Lịch Sự Kiện</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Pháp Hội & Sự Kiện</h1>
@@ -103,8 +90,15 @@ export default function EventsPage() {
               ))}
             </div>
             <div className="flex gap-2 flex-wrap">
-              {Object.entries(typeLabels).map(([key, { label, icon }]) => (
-                <button key={key} onClick={() => setTypeFilter(typeFilter === key ? null : key)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter === key ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>{icon} {label}</button>
+              {Object.entries(typeLabels).map(([key, { label, icon: Icon }]) => (
+                <button
+                  key={key}
+                  onClick={() => setTypeFilter(typeFilter === key ? null : key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${typeFilter === key ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
               ))}
             </div>
           </div>
@@ -114,8 +108,13 @@ export default function EventsPage() {
               <motion.div key={event.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: event.id * 0.03 }} className={`rounded-xl border p-5 transition-all ${event.status === "past" ? "bg-card/50 border-border/50" : "bg-card border-border hover:border-gold/20"}`}>
                 <div className="flex flex-col md:flex-row md:items-start gap-4">
                   <div className="w-16 h-16 rounded-xl bg-secondary flex flex-col items-center justify-center shrink-0">
-                    <span className="text-lg">{typeLabels[event.type].icon}</span>
-                    <span className="text-xs text-muted-foreground">{event.date.split("/")[0]}</span>
+                    <span className="text-gold mb-1">
+                      {(() => {
+                        const Icon = typeLabels[event.type].icon;
+                        return <Icon className="w-6 h-6" />;
+                      })()}
+                    </span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{event.date.split("/")[0]} Th.{event.date.split("/")[1]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -125,18 +124,18 @@ export default function EventsPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">{event.description}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground/80">
-                      <div className="flex items-center gap-1.5"><ClockIcon className="w-3.5 h-3.5" /><span>{event.date} • {event.time}</span></div>
-                      <div className="flex items-center gap-1.5"><MapPinIcon className="w-3.5 h-3.5" /><span className="truncate">{event.location}</span></div>
-                      <div className="flex items-center gap-1.5"><span>📢</span><span>{event.speaker}</span></div>
-                      <div className="flex items-center gap-1.5"><span>🔗</span><span>{event.language}</span></div>
+                      <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /><span>{event.date} • {event.time}</span></div>
+                      <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /><span className="truncate">{event.location}</span></div>
+                      <div className="flex items-center gap-1.5"><Megaphone className="w-3.5 h-3.5" /><span>{event.speaker}</span></div>
+                      <div className="flex items-center gap-1.5"><Languages className="w-3.5 h-3.5" /><span>{event.language}</span></div>
                     </div>
                   </div>
                   <div className="shrink-0 flex flex-col gap-2">
                     {event.status === "upcoming" && event.link && (
-                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 bg-gold/10 text-gold rounded-lg text-xs font-medium hover:bg-gold/20 transition-colors">Tham Gia <ArrowRightIcon className="w-3 h-3" /></a>
+                      <a href={event.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 bg-gold/10 text-gold rounded-lg text-xs font-medium hover:bg-gold/20 transition-colors">Tham Gia <ChevronRight className="w-3 h-3" /></a>
                     )}
                     {event.status === "past" && event.youtubeId && (
-                      <a href={`https://www.youtube.com/watch?v=${event.youtubeId}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/20 transition-colors"><VideoCamIcon className="w-3.5 h-3.5" /> Xem Lại</a>
+                      <a href={`https://www.youtube.com/watch?v=${event.youtubeId}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/20 transition-colors"><Video className="w-3.5 h-3.5" /> Xem Lại</a>
                     )}
                   </div>
                 </div>
@@ -151,7 +150,7 @@ export default function EventsPage() {
             <p className="text-sm text-muted-foreground mb-5 max-w-lg mx-auto">Nếu bạn muốn tổ chức pháp hội, phóng sinh hoặc khóa tu tại địa phương, liên hệ Quán Âm Đường gần nhất.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/directory" className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors">
-                <MapPinIcon className="w-4 h-4" /> Tìm Quán Âm Đường
+                <MapPin className="w-4 h-4" /> Tìm Quán Âm Đường
               </Link>
               <a href="mailto:oriental2or@hotmail.com" className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-foreground rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors">Liên Hệ Ban Tổ Chức</a>
             </div>

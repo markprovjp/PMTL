@@ -1,247 +1,599 @@
 'use client';
+// ─────────────────────────────────────────────────────────────────
+//  /lunar-calendar — Lịch Âm Tu Học Pháp Môn Tâm Linh
+//  Tích hợp @forvn/vn-lunar-calendar, đánh dấu ngày vía Phật/BT,
+//  khai thị sư phụ, ngày trai, đổi tháng, có link khai thị liên kết.
+// ─────────────────────────────────────────────────────────────────
+import { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import StickyBanner from '@/components/StickyBanner';
+import {
+  Sun,
+  Moon,
+  Flower2,
+  BookOpen,
+  Sparkles,
+  Calendar as CalendarIcon,
+  Bell as BellIcon,
+  Link as LinkIcon,
+  ChevronLeft,
+  ChevronRight,
+  PartyPopper,
+  ScrollText,
+  Flame,
+  Leaf,
+  Sword,
+  type LucideIcon
+} from 'lucide-react';
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import Header from "@/components/Header";
-import Breadcrumbs from "@/components/Breadcrumbs";
-import Footer from "@/components/Footer";
-import StickyBanner from "@/components/StickyBanner";
-
-const CalendarIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" />
-    <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-
-const MoonIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-interface Festival {
-  name: string;
-  lunarDate: string;
-  solarDate: string;
-  description: string;
-  type: "major" | "recitation" | "fast" | "commemoration";
-  practices: string[];
+/* ── Lazy-load lunar lib ─────────────────────────────────────── */
+// @forvn/vn-lunar-calendar — converts solar <-> Vietnamese lunar
+let lunarLib: { LunarCalendar?: any; default?: { LunarCalendar: any } } | null = null;
+async function getLunarLib() {
+  if (lunarLib) return lunarLib;
+  lunarLib = await import('@forvn/vn-lunar-calendar');
+  return lunarLib;
 }
 
-const months2025 = [
-  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12",
+/* ── Types ──────────────────────────────────────────────────── */
+interface SpecialDay {
+  lunarMonth: number;
+  lunarDay: number;
+  name: string;
+  type: 'buddha' | 'bodhisattva' | 'teacher' | 'fast' | 'holiday';
+  teachingSlug?: string; // link to /teachings/xxx
+  description: string;
+  icon: LucideIcon;
+}
+
+/* ── Dữ liệu ngày đặc biệt theo LỊCH ÂM ─────────────────────
+   Nguồn: truyền thống Phật giáo Đại Thừa — Bồ Tát Quan Thế Âm,
+   Ngày vía Phật, ngày trai 6 ngày / 10 ngày.
+   teacher = ngày sư phụ khai thị sẽ được thêm vào sau theo CMS.
+─────────────────────────────────────────────────────────────── */
+const SPECIAL_DAYS: SpecialDay[] = [
+  // ── Chư Phật ──
+  { lunarMonth: 1, lunarDay: 1, name: 'Tết Nguyên Đán & Vía Di Lặc', type: 'holiday', description: 'Năm mới Âm lịch — niệm kinh cầu an đầu năm.', icon: PartyPopper },
+  { lunarMonth: 1, lunarDay: 15, name: 'Rằm Thượng Nguyên', type: 'holiday', description: 'Ngày cầu nguyện linh ứng nhất năm.', icon: Sun },
+  { lunarMonth: 2, lunarDay: 8, name: 'Vía Phật Thích Ca Xuất Gia', type: 'buddha', description: 'Kỷ niệm Thái tử Tất Đạt Đa rời hoàng cung tu đạo.', icon: Sparkles },
+  { lunarMonth: 2, lunarDay: 15, name: 'Vía Phật Thích Ca Nhập Niết Bàn', type: 'buddha', description: 'Kỷ niệm ngày Đức Phật nhập diệt tại rừng Câu Thi Na.', icon: Moon },
+  { lunarMonth: 2, lunarDay: 19, name: 'Vía Quán Thế Âm Đản Sinh', type: 'bodhisattva', teachingSlug: 'quan-the-am-dan-sinh', description: 'Đản sinh Bồ Tát Quán Thế Âm — Chú Đại Bi 49+ biến.', icon: Flower2 },
+  { lunarMonth: 2, lunarDay: 21, name: 'Vía Phổ Hiền Bồ Tát', type: 'bodhisattva', description: 'Đại Hạnh Bồ Tát Phổ Hiền — khổ hạnh, thực hành.', icon: Sparkles },
+  { lunarMonth: 3, lunarDay: 16, name: 'Vía Chuẩn Đề Bồ Tát', type: 'bodhisattva', description: 'Công đức vô lượng — niệm Chuẩn Đề Thần Chú tăng phước.', icon: Sparkles },
+  { lunarMonth: 4, lunarDay: 4, name: 'Vía Văn Thù Sư Lợi Bồ Tát', type: 'bodhisattva', description: 'Đản sinh Bồ Tát Văn Thù — trí tuệ, học hành.', icon: BookOpen },
+  { lunarMonth: 4, lunarDay: 8, name: 'Vía Phật Thích Ca Đản Sinh (Phật Đản)', type: 'buddha', description: 'Đức Phật đản sinh tại vườn Lâm Tỳ Ni.', icon: Sparkles },
+  { lunarMonth: 4, lunarDay: 15, name: 'Phật Đản (Lễ Hội Vesak)', type: 'buddha', teachingSlug: 'phat-dan', description: 'Kỷ niệm ngày Đức Phật Thích Ca ra đời. Ăn chay, phóng sinh.', icon: Sparkles },
+  { lunarMonth: 6, lunarDay: 3, name: 'Vía Hộ Pháp Vi Đà Bồ Tát', type: 'bodhisattva', description: 'Bảo hộ chánh pháp — niệm kinh hộ trì.', icon: Sword },
+  { lunarMonth: 6, lunarDay: 19, name: 'Vía Quán Thế Âm Thành Đạo', type: 'bodhisattva', teachingSlug: 'quan-the-am-thanh-dao', description: 'Ngày Bồ Tát Quán Thế Âm đắc đạo — Chú Đại Bi 49 biến.', icon: Flower2 },
+  { lunarMonth: 7, lunarDay: 13, name: 'Vía Đại Thế Chí Bồ Tát', type: 'bodhisattva', description: 'Đản sinh Bồ Tát Đại Thế Chí.', icon: Sparkles },
+  { lunarMonth: 7, lunarDay: 15, name: 'Vu Lan Báo Hiếu (Rằm Tháng Bảy)', type: 'holiday', teachingSlug: 'vu-lan-bao-hieu', description: 'Tháng báo hiếu — siêu độ vong linh, đốt Ngôi Nhà Nhỏ.', icon: Moon },
+  { lunarMonth: 7, lunarDay: 30, name: 'Vía Địa Tạng Vương Bồ Tát', type: 'bodhisattva', description: 'Đản sinh Bồ Tát Địa Tạng — đại nguyện độ thoát chúng sinh.', icon: Flame },
+  { lunarMonth: 9, lunarDay: 9, name: 'Vía Diêm Vương (Ngày Trùng Cửu)', type: 'holiday', description: 'Dâng lễ, siêu độ vong linh và cầu nguyện gia tiên.', icon: Flame },
+  { lunarMonth: 9, lunarDay: 19, name: 'Vía Quán Thế Âm Xuất Gia', type: 'bodhisattva', teachingSlug: 'quan-the-am-xuat-gia', description: 'Kỷ niệm Bồ Tát Quán Thế Âm xuất gia tu hành.', icon: Flower2 },
+  { lunarMonth: 9, lunarDay: 30, name: 'Vía Phật Dược Sư', type: 'buddha', description: 'Cầu sức khỏe, tiêu trừ nghiệp bệnh thân tâm.', icon: Sparkles },
+  { lunarMonth: 11, lunarDay: 17, name: 'Vía Phật A Di Đà', type: 'buddha', teachingSlug: 'phat-a-di-da', description: 'Niệm hồng danh A Di Đà nhiều nhất trong năm.', icon: Sparkles },
+  { lunarMonth: 12, lunarDay: 8, name: 'Ngày Phóng Sinh / Sư Phụ Khai Thị', type: 'teacher', description: 'Ngày đặc biệt tu tập — quảng độ chúng sinh.', icon: Flower2 },
+  { lunarMonth: 12, lunarDay: 23, name: 'Tiễn Ông Táo', type: 'holiday', description: 'Sám hối, niệm kinh tiễn Thần Bếp về trời.', icon: Flame },
 ];
 
-const festivals: Festival[] = [
-  { name: "Tết Nguyên Đán Ất Tỵ", lunarDate: "Mùng 1 tháng Giêng", solarDate: "29/01/2025", description: "Năm mới Âm lịch — niệm kinh cầu an, đốt Ngôi Nhà Nhỏ đầu năm.", type: "major", practices: ["Niệm Chú Đại Bi 108 biến", "Tâm Kinh 21 biến", "Thắp hương khấn nguyện cả năm"] },
-  { name: "Rằm Tháng Giêng (Thượng Nguyên)", lunarDate: "15 tháng Giêng", solarDate: "12/02/2025", description: "Ngày vía Phật rất lớn, cầu nguyện linh ứng nhất trong năm.", type: "major", practices: ["Ăn chay", "Niệm kinh nhiều gấp đôi", "Phóng sinh", "Đốt Ngôi Nhà Nhỏ"] },
-  { name: "Vía Quán Thế Âm Đản Sinh", lunarDate: "19 tháng 2 Âm lịch", solarDate: "17/03/2025", description: "Ngày đản sinh của Bồ Tát Quán Thế Âm — niệm nhiều Chú Đại Bi.", type: "major", practices: ["Chú Đại Bi 49+ biến", "Ăn chay", "Phóng sinh", "Lễ Phật Đại Sám Hối 7 biến"] },
-  { name: "Vía Phật Thích Ca Đản Sinh", lunarDate: "15 tháng 4 Âm lịch", solarDate: "12/05/2025", description: "Phật đản — kỷ niệm ngày Đức Phật Thích Ca ra đời.", type: "major", practices: ["Niệm Tâm Kinh 49 biến", "Lễ Phật Đại Sám Hối 7 biến", "Ăn chay", "Phóng sinh"] },
-  { name: "Rằm Tháng 7 (Vu Lan)", lunarDate: "15 tháng 7 Âm lịch", solarDate: "08/08/2025", description: "Tháng báo hiếu — siêu độ vong linh, đốt Ngôi Nhà Nhỏ cho cha mẹ.", type: "major", practices: ["Đốt 21 Ngôi Nhà Nhỏ", "Phóng sinh", "Ăn chay nguyên tháng 7"] },
-  { name: "Vía Quán Thế Âm Thành Đạo", lunarDate: "19 tháng 6 Âm lịch", solarDate: "14/07/2025", description: "Ngày Bồ Tát Quán Thế Âm thành đạo — cầu nguyện rất linh ứng.", type: "major", practices: ["Chú Đại Bi 49+ biến", "Ăn chay", "Lễ Phật Đại Sám Hối 7 biến"] },
-  { name: "Vía Quán Thế Âm Xuất Gia", lunarDate: "19 tháng 9 Âm lịch", solarDate: "20/10/2025", description: "Kỷ niệm ngày Bồ Tát Quán Thế Âm xuất gia tu hành.", type: "major", practices: ["Chú Đại Bi 49+ biến", "Ăn chay", "Phóng sinh"] },
-  { name: "Mùng 1 & 15 Hàng Tháng", lunarDate: "Mỗi tháng", solarDate: "Xem lịch âm", description: "Ngày trai — ăn chay nguyên ngày, tụng kinh nhiều hơn.", type: "fast", practices: ["Ăn chay", "Niệm kinh gấp đôi", "Đốt Ngôi Nhà Nhỏ"] },
-  { name: "Ngày Vía Phật A Di Đà", lunarDate: "17 tháng 11 Âm lịch", solarDate: "06/12/2025", description: "Ngày vía Phật A Di Đà — niệm hồng danh cầu siêu độ.", type: "commemoration", practices: ["Niệm danh hiệu A Di Đà", "Tâm Kinh 49 biến", "Ăn chay"] },
-  { name: "Tháng Siêu Độ (Tháng 7 Âm)", lunarDate: "Cả tháng 7 Âm lịch", solarDate: "26/07 - 23/08/2025", description: "Tháng cửa Quỷ Môn mở — siêu độ vong linh, đốt nhiều Ngôi Nhà Nhỏ.", type: "recitation", practices: ["Đốt 49-108 Ngôi Nhà Nhỏ", "Vãng Sinh Chú 49 biến/ngày", "Ăn chay trường"] },
-];
+// Ngày trai thêm vào hàng tháng
+const FAST_DAYS_LUNAR = [1, 8, 14, 15, 18, 23, 24, 28, 29, 30];
 
-const typeLabels: Record<string, { label: string; color: string }> = {
-  major: { label: "Lễ Lớn", color: "bg-red-500/10 text-red-400" },
-  recitation: { label: "Niệm Kinh", color: "bg-blue-500/10 text-blue-400" },
-  fast: { label: "Ngày Trai", color: "bg-green-500/10 text-green-400" },
-  commemoration: { label: "Kỷ Niệm", color: "bg-purple-500/10 text-purple-400" },
+/* ── Color map ───────────────────────────────────────────────── */
+const TYPE_STYLE: Record<SpecialDay['type'], { bg: string; text: string; border: string; dot: string }> = {
+  buddha: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', dot: 'bg-amber-400' },
+  bodhisattva: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30', dot: 'bg-rose-400' },
+  teacher: { bg: 'bg-gold/10', text: 'text-gold', border: 'border-gold/40', dot: 'bg-gold' },
+  fast: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
+  holiday: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30', dot: 'bg-purple-400' },
 };
 
-const auspiciousDays = [
-  { date: "Mùng 1", note: "Ngày vía Bồ Tát Di Lặc (tháng Giêng)" },
-  { date: "Mùng 8", note: "Ngày vía Phật Dược Sư (tháng 9 Âm)" },
-  { date: "Mùng 15", note: "Ngày rằm — ăn chay, tụng kinh" },
-  { date: "Mùng 19", note: "Ngày vía Quán Thế Âm (tháng 2, 6, 9 Âm)" },
-  { date: "23 tháng Chạp", note: "Tiễn Ông Táo — sám hối, niệm kinh" },
-];
+// Emojis replaced with Lucide icons imported above.
+// Custom LotusMarker remains for the calendar grid dots as it is highly specific.
+
+
+/* ── LotusIcon SVG ────────────────────────────────────────────── */
+const LotusMarker = ({ type }: { type: SpecialDay['type'] }) => {
+  const colors: Record<SpecialDay['type'], string> = {
+    buddha: '#F59E0B',
+    bodhisattva: '#F43F5E',
+    teacher: '#D4AF37',
+    fast: '#10B981',
+    holiday: '#A855F7',
+  };
+  const fill = colors[type] || '#D4AF37';
+  return (
+    <svg viewBox="0 0 20 20" className="w-3 h-3 drop-shadow-sm" fill={fill}>
+      <path d="M10 2c-1 2-3 3-3 5s2 3 3 3 3-1 3-3-2-3-3-5z" opacity="0.9" />
+      <path d="M3 10c2-1 3-3 5-3s3 2 3 3-1 3-3 3-3-2-5-3z" opacity="0.75" />
+      <path d="M17 10c-2-1-3-3-5-3s-3 2-3 3 1 3 3 3 3-2 5-3z" opacity="0.75" />
+      <circle cx="10" cy="13" r="2.5" opacity="0.9" />
+    </svg>
+  );
+};
+
+/* ── Lunar helper ────────────────────────────────────────────── */
+interface LunarInfo { lunarDay: number; lunarMonth: number; lunarYear: number; isLeapMonth: boolean; canChi?: string }
+const lunarCache = new Map<string, LunarInfo>();
+
+async function solarToLunar(year: number, month: number, day: number): Promise<LunarInfo> {
+  const key = `${year}-${month}-${day}`;
+  if (lunarCache.has(key)) return lunarCache.get(key)!;
+  try {
+    const lib = await getLunarLib();
+    // API: new LunarCalendar(day, month, year)._lunarDate → { day, month, year, leap }
+    const Cls = lib.LunarCalendar ?? lib.default?.LunarCalendar;
+    if (Cls) {
+      const lc = new Cls(day, month, year);
+      const ld = lc._lunarDate;
+      const result: LunarInfo = {
+        lunarDay: ld.day,
+        lunarMonth: ld.month,
+        lunarYear: ld.year,
+        isLeapMonth: ld.leap ?? false,
+      };
+      lunarCache.set(key, result);
+      return result;
+    }
+  } catch { }
+  return { lunarDay: day, lunarMonth: month, lunarYear: year, isLeapMonth: false };
+}
+
+/* ── Tháng Can Chi ────────────────────────────────────────────── */
+const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+const CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+function yearCanChi(year: number) {
+  return `${CAN[(year - 4) % 10]} ${CHI[(year - 4) % 12]}`;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  COMPONENT DayCell — 1 ô trong lịch                          */
+/* ══════════════════════════════════════════════════════════════ */
+interface DayCellProps {
+  solarDay: number;
+  solarMonth: number;
+  solarYear: number;
+  isToday: boolean;
+  isCurrentMonth: boolean;
+  onClick: () => void;
+}
+
+function DayCell({ solarDay, solarMonth, solarYear, isToday, isCurrentMonth, onClick }: DayCellProps) {
+  const [lunar, setLunar] = useState<LunarInfo | null>(null);
+  const [markers, setMarkers] = useState<SpecialDay[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    solarToLunar(solarYear, solarMonth, solarDay).then((l) => {
+      if (cancelled) return;
+      setLunar(l);
+      // Tìm ngày đặc biệt
+      const found = SPECIAL_DAYS.filter(
+        (s) => s.lunarMonth === l.lunarMonth && s.lunarDay === l.lunarDay
+      );
+      // Ngày trai
+      if (FAST_DAYS_LUNAR.includes(l.lunarDay)) {
+        found.push({ lunarMonth: l.lunarMonth, lunarDay: l.lunarDay, name: `Ngày ${l.lunarDay === 1 ? 'Mùng 1' : l.lunarDay === 15 ? 'Rằm' : `Trai ${l.lunarDay}`}`, type: 'fast', description: 'Ngày trai — ăn chay, niệm kinh nhiều hơn.', icon: Leaf });
+      }
+      setMarkers(found);
+    });
+    return () => { cancelled = true; };
+  }, [solarDay, solarMonth, solarYear]);
+
+  const isSpecial = markers.length > 0;
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        relative group w-full aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all duration-200
+        ${isToday ? 'bg-gold/20 border border-gold/60 shadow-md shadow-gold/10' : ''}
+        ${!isToday && isSpecial ? 'bg-card border border-border hover:border-gold/40' : ''}
+        ${!isToday && !isSpecial ? 'hover:bg-secondary/50' : ''}
+        ${!isCurrentMonth ? 'opacity-30' : ''}
+      `}
+    >
+      {/* Solar day number */}
+      <span className={`font-semibold text-sm leading-none mb-0.5 ${isToday ? 'text-gold' : isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}`}>
+        {solarDay}
+      </span>
+
+      {/* Lunar day */}
+      {lunar && (
+        <span className={`text-[9px] leading-none ${isToday ? 'text-gold/70' : 'text-muted-foreground/60'}`}>
+          {lunar.lunarDay === 1 ? `M.1 Th.${lunar.lunarMonth}` : lunar.lunarDay === 15 ? 'Rằm' : `${lunar.lunarDay}`}
+        </span>
+      )}
+
+      {/* Lotus markers */}
+      {markers.length > 0 && (
+        <div className="flex gap-0.5 mt-0.5">
+          {markers.slice(0, 3).map((m, i) => (
+            <LotusMarker key={i} type={m.type} />
+          ))}
+        </div>
+      )}
+
+      {/* Tooltip on hover */}
+      {isSpecial && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-20 pointer-events-none">
+          <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs shadow-xl text-left whitespace-nowrap max-w-[200px]">
+            {markers.map((m, i) => (
+              <p key={i} className={`flex items-center gap-1.5 truncate ${TYPE_STYLE[m.type]?.text}`}>
+                <m.icon className="w-3 h-3" /> {m.name}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  DETAIL DRAWER — hiện khi click vào ngày                     */
+/* ══════════════════════════════════════════════════════════════ */
+interface DayDetail {
+  solar: { day: number; month: number; year: number };
+  lunar: LunarInfo;
+  markers: SpecialDay[];
+}
+
+function DayDrawer({ detail, onClose }: { detail: DayDetail | null; onClose: () => void }) {
+  if (!detail) return null;
+  const { solar, lunar, markers } = detail;
+  const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const dow = new Date(solar.year, solar.month - 1, solar.day).getDay();
+
+  return (
+    <AnimatePresence>
+      {detail && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: 60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 60, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-border bg-gradient-to-r from-card to-secondary/30">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">{dayNames[dow]}</p>
+                  <p className="font-display text-4xl text-foreground leading-none">{solar.day}</p>
+                  <p className="text-sm text-muted-foreground mt-1">tháng {solar.month}, {solar.year}</p>
+                </div>
+                <div className="text-right">
+                  <div className="inline-block bg-gold/10 border border-gold/20 rounded-xl px-4 py-3">
+                    <p className="text-xs text-gold/70 font-medium mb-0.5">Âm lịch</p>
+                    <p className="font-display text-2xl text-gold">{lunar.lunarDay}</p>
+                    <p className="text-xs text-gold/70">tháng {lunar.lunarMonth}{lunar.isLeapMonth ? ' nhuận' : ''}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Special days */}
+            <div className="px-6 py-4 space-y-3 max-h-72 overflow-y-auto">
+              {markers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Ngày thường — tu học như thường.</p>
+              ) : (
+                markers.map((m, i) => {
+                  const style = TYPE_STYLE[m.type];
+                  return (
+                    <div key={i} className={`rounded-xl p-4 border ${style.bg} ${style.border}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <m.icon className={`w-5 h-5 ${style.text}`} />
+                        <h3 className={`text-sm font-semibold ${style.text}`}>{m.name}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{m.description}</p>
+                      {m.teachingSlug && (
+                        <a
+                          href={`/teachings/${m.teachingSlug}`}
+                          className={`mt-3 inline-flex items-center gap-1.5 text-xs font-medium ${style.text} hover:underline`}
+                        >
+                          <LinkIcon /> Xem bài khai thị liên quan →
+                        </a>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+              <button
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gold transition-colors"
+                onClick={() => { alert('Tính năng nhắc lịch qua email sắp ra mắt!'); }}
+              >
+                <BellIcon /> Nhắc trước 1 ngày
+              </button>
+              <button onClick={onClose} className="px-4 py-2 rounded-lg bg-secondary text-xs text-foreground hover:bg-border transition-colors">
+                Đóng
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  MAIN PAGE                                                    */
+/* ══════════════════════════════════════════════════════════════ */
+const DOW_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const MONTH_NAMES = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 
 export default function LunarCalendarPage() {
-  const [selectedMonth, setSelectedMonth] = useState(0);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [expandedFestival, setExpandedFestival] = useState<string | null>(null);
+  const now = new Date();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth() + 1); // 1-12
+  const [selectedDay, setSelectedDay] = useState<DayDetail | null>(null);
+  const [todayLunar, setTodayLunar] = useState<LunarInfo | null>(null);
+  const [upcomingMarkers, setUpcomingMarkers] = useState<Array<{ date: string; items: SpecialDay[] }>>([]);
 
-  const filteredFestivals = festivals.filter((f) => {
-    if (selectedType && f.type !== selectedType) return false;
-    return true;
-  });
+  useEffect(() => {
+    const today = new Date();
+    solarToLunar(today.getFullYear(), today.getMonth() + 1, today.getDate()).then(setTodayLunar);
+  }, []);
+
+  // Build upcoming events (next 60 days)
+  useEffect(() => {
+    const result: Array<{ date: string; items: SpecialDay[] }> = [];
+    const run = async () => {
+      const today = new Date();
+      for (let i = 0; i <= 60; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+        const lunar = await solarToLunar(y, m, day);
+        const found = SPECIAL_DAYS.filter((s) => s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay && s.type !== 'fast');
+        if (found.length > 0) {
+          result.push({ date: `${day}/${m}/${y}`, items: found });
+          if (result.length >= 5) break;
+        }
+      }
+      setUpcomingMarkers(result);
+    };
+    run();
+  }, []);
+
+  // Build calendar grid
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(viewYear, viewMonth - 1, 1);
+    const startDow = firstDay.getDay(); // 0=Sun
+    const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth - 1, 0).getDate();
+
+    const cells: Array<{ day: number; month: number; year: number; current: boolean }> = [];
+
+    // Prev month trail
+    for (let i = startDow - 1; i >= 0; i--) {
+      const day = daysInPrevMonth - i;
+      const prevMonth = viewMonth === 1 ? 12 : viewMonth - 1;
+      const prevYear = viewMonth === 1 ? viewYear - 1 : viewYear;
+      cells.push({ day, month: prevMonth, year: prevYear, current: false });
+    }
+
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, month: viewMonth, year: viewYear, current: true });
+    }
+
+    // Next month trail
+    const remaining = 42 - cells.length;
+    for (let d = 1; d <= remaining; d++) {
+      const nextMonth = viewMonth === 12 ? 1 : viewMonth + 1;
+      const nextYear = viewMonth === 12 ? viewYear + 1 : viewYear;
+      cells.push({ day: d, month: nextMonth, year: nextYear, current: false });
+    }
+
+    return cells;
+  }, [viewYear, viewMonth]);
+
+  const handlePrev = () => {
+    if (viewMonth === 1) { setViewMonth(12); setViewYear((y) => y - 1); }
+    else setViewMonth((m) => m - 1);
+  };
+  const handleNext = () => {
+    if (viewMonth === 12) { setViewMonth(1); setViewYear((y) => y + 1); }
+    else setViewMonth((m) => m + 1);
+  };
+  const goToday = () => { setViewYear(now.getFullYear()); setViewMonth(now.getMonth() + 1); };
+
+  const handleCellClick = async (day: number, month: number, year: number) => {
+    const lunar = await solarToLunar(year, month, day);
+    const markers = SPECIAL_DAYS.filter((s) => s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay);
+    if (FAST_DAYS_LUNAR.includes(lunar.lunarDay)) {
+      markers.push({ lunarMonth: lunar.lunarMonth, lunarDay: lunar.lunarDay, name: `Ngày ${lunar.lunarDay === 1 ? 'Mùng 1' : lunar.lunarDay === 15 ? 'Rằm' : `${lunar.lunarDay}`} — Ngày Trai`, type: 'fast', description: 'Ăn chay, niệm kinh gấp đôi, phóng sinh nếu có thể.', icon: Leaf });
+    }
+    setSelectedDay({ solar: { day, month, year }, lunar, markers });
+  };
+
+  const isToday = (day: number, month: number, year: number) =>
+    day === now.getDate() && month === now.getMonth() + 1 && year === now.getFullYear();
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="py-16">
-        <div className="container mx-auto px-6">
-          <Breadcrumbs
-            centered
-            items={[
-              { label: 'Lịch tu' }
-            ]}
-          />
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
-            <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Năm Ất Tỵ 2025</p>
-            <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4 flex items-center justify-center gap-3">
-              <MoonIcon className="w-8 h-8 text-gold" />
-              Lịch Tu Học
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Các ngày vía Phật, Bồ Tát, ngày trai và các dịp đặc biệt theo Âm lịch.
-            </p>
-          </motion.div>
 
+      <main className="pb-24">
+        {/* ── Hero compact ────────────────────────────────────── */}
+        <div className="bg-gradient-to-b from-card/80 to-background border-b border-border/50 py-10">
+          <div className="container mx-auto px-6 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-[10px] font-bold uppercase tracking-widest mb-4">
+              <Sparkles className="w-3 h-3" /> Pháp Môn Tâm Linh
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl text-foreground mb-3">
+              Lịch Tu Học <span className="text-gold">Âm Lịch</span>
+            </h1>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
+              Ngày vía Phật, Bồ Tát · Ngày trai · Khai thị Sư Phụ — tất cả trên một trang.
+            </p>
+
+            {/* Today's info pill */}
+            {todayLunar && (
+              <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-3">
+                <div className="flex items-center gap-2 bg-card border border-border rounded-xl px-4 py-2">
+                  <span className="text-xs text-muted-foreground">Hôm nay:</span>
+                  <span className="text-sm font-bold text-foreground">{now.getDate()}/{now.getMonth() + 1}/{now.getFullYear()}</span>
+                  <span className="w-px h-4 bg-border" />
+                  <span className="text-xs text-gold font-medium">
+                    ÂL: {todayLunar.lunarDay} tháng {todayLunar.lunarMonth}{todayLunar.isLeapMonth ? ' nhuận' : ''}
+                  </span>
+                  <span className="w-px h-4 bg-border" />
+                  <span className="text-xs text-muted-foreground">Năm {yearCanChi(now.getFullYear())}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 mt-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main */}
+            {/* ── Calendar ────────────────────────────────────── */}
             <div className="flex-1">
-              {/* Filters */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <button
-                  onClick={() => setSelectedType(null)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!selectedType ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
-                >
-                  Tất Cả
+              {/* Month navigation */}
+              <div className="flex items-center justify-between mb-5">
+                <button onClick={handlePrev} className="p-2 rounded-xl bg-card border border-border hover:border-gold/40 transition-colors text-muted-foreground hover:text-foreground">
+                  <ChevronLeft />
                 </button>
-                {Object.entries(typeLabels).map(([key, { label, color }]) => (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedType(selectedType === key ? null : key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedType === key ? color : "bg-secondary text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    {label}
-                  </button>
+
+                <div className="text-center">
+                  <h2 className="font-display text-xl text-foreground">
+                    {MONTH_NAMES[viewMonth - 1]} · <span className="text-gold">{viewYear}</span>
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground/60">Năm {yearCanChi(viewYear)}</p>
+                </div>
+
+                <button onClick={handleNext} className="p-2 rounded-xl bg-card border border-border hover:border-gold/40 transition-colors text-muted-foreground hover:text-foreground">
+                  <ChevronRight />
+                </button>
+              </div>
+
+              {/* Today button */}
+              <div className="flex justify-end mb-4">
+                <button onClick={goToday} className="text-[11px] text-muted-foreground hover:text-gold transition-colors border border-border bg-card px-3 py-1 rounded-full">
+                  Hôm nay
+                </button>
+              </div>
+
+              {/* DOW header */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {DOW_LABELS.map((d, i) => (
+                  <div key={d} className={`text-center text-[10px] font-bold uppercase py-1.5 ${i === 0 ? 'text-rose-400' : i === 6 ? 'text-blue-400' : 'text-muted-foreground/60'}`}>
+                    {d}
+                  </div>
                 ))}
               </div>
 
-              {/* Month selector */}
-              <div className="mb-6 overflow-x-auto scrollbar-hide">
-                <div className="flex gap-1.5 min-w-max">
-                  {months2025.map((m, i) => (
-                    <button
-                      key={m}
-                      onClick={() => setSelectedMonth(i)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${selectedMonth === i ? "bg-gold/20 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Calendar cells */}
+              <motion.div
+                key={`${viewYear}-${viewMonth}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-7 gap-1"
+              >
+                {calendarDays.map((cell, idx) => (
+                  <DayCell
+                    key={`${cell.year}-${cell.month}-${cell.day}-${idx}`}
+                    solarDay={cell.day}
+                    solarMonth={cell.month}
+                    solarYear={cell.year}
+                    isToday={isToday(cell.day, cell.month, cell.year)}
+                    isCurrentMonth={cell.current}
+                    onClick={() => handleCellClick(cell.day, cell.month, cell.year)}
+                  />
+                ))}
+              </motion.div>
 
-              {/* Festival List */}
-              <div className="space-y-3">
-                {filteredFestivals.map((festival) => {
-                  const isExpanded = expandedFestival === festival.name;
-                  return (
-                    <motion.div
-                      key={festival.name}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="rounded-xl bg-card border border-border overflow-hidden"
-                    >
-                      <button
-                        onClick={() => setExpandedFestival(isExpanded ? null : festival.name)}
-                        className="w-full flex items-center gap-4 p-5 text-left"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-secondary flex flex-col items-center justify-center shrink-0">
-                          <CalendarIcon className="w-4 h-4 text-gold" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-sm font-medium text-foreground">{festival.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeLabels[festival.type].color}`}>
-                              {typeLabels[festival.type].label}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{festival.description}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-xs text-gold font-medium">{festival.lunarDate}</p>
-                          <p className="text-xs text-muted-foreground/60">{festival.solarDate}</p>
-                        </div>
-                      </button>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="px-5 pb-5 border-t border-border/50 pt-4"
-                        >
-                          <p className="text-xs font-medium text-foreground mb-2">Khóa Tu Đề Xuất:</p>
-                          <div className="space-y-1.5">
-                            {festival.practices.map((p, i) => (
-                              <div key={i} className="flex items-start gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-gold/40 mt-1.5 shrink-0" />
-                                <p className="text-xs text-muted-foreground">{p}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  );
-                })}
+              {/* Legend */}
+              <div className="mt-5 flex flex-wrap gap-3 justify-center">
+                {([
+                  ['buddha', Sparkles, 'Ngày Phật'],
+                  ['bodhisattva', Flower2, 'Ngày Bồ Tát'],
+                  ['teacher', ScrollText, 'Khai Thị'],
+                  ['fast', Leaf, 'Ngày Trai'],
+                  ['holiday', PartyPopper, 'Ngày Lễ'],
+                ] as const).map(([type, Icon, label]) => (
+                  <div key={type} className="flex items-center gap-1.5">
+                    <Icon className={`w-3 h-3 ${TYPE_STYLE[type].text}`} />
+                    <span className="text-[10px] text-muted-foreground">{label}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:w-72 space-y-6">
-              {/* Key Dates */}
-              <div className="p-5 rounded-xl bg-card border border-border">
-                <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                  <MoonIcon className="w-4 h-4 text-gold" />
-                  Ngày Quan Trọng Hàng Tháng
-                </h3>
-                <div className="space-y-3">
-                  {auspiciousDays.map((d) => (
-                    <div key={d.date} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0" />
-                      <div>
-                        <p className="text-xs text-gold font-medium">{d.date}</p>
-                        <p className="text-xs text-muted-foreground">{d.note}</p>
+            {/* ── Sidebar ─────────────────────────────────────── */}
+            <div className="lg:w-72 space-y-5">
+              {/* Upcoming events */}
+              <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                <div className="px-5 py-4 border-b border-border bg-gradient-to-r from-gold/5 to-transparent flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-gold" />
+                  <h3 className="text-sm font-bold text-foreground">Ngày Quan Trọng Sắp Tới</h3>
+                </div>
+                <div className="px-5 py-4 space-y-4">
+                  {upcomingMarkers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Đang tải...</p>
+                  ) : (
+                    upcomingMarkers.map((ev, i) => (
+                      <div key={i} className="space-y-1">
+                        <p className="text-[10px] text-muted-foreground font-medium">{ev.date}</p>
+                        {ev.items.map((m, j) => (
+                          <div key={j} className="flex items-center gap-2">
+                            <LotusMarker type={m.type} />
+                            <p className={`text-xs font-medium ${TYPE_STYLE[m.type].text}`}>{m.name}</p>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Leaf className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-emerald-400">Ngày Trai Hàng Tháng</h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {FAST_DAYS_LUNAR.map((d) => (
+                    <span key={d} className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold">
+                      {d === 1 ? 'M.1' : d === 15 ? 'Rằm' : d}
+                    </span>
                   ))}
                 </div>
+                <p className="text-[10px] text-muted-foreground/60 mt-3">
+                  Ăn chay · Niệm kinh gấp đôi · Phóng sinh
+                </p>
               </div>
 
-              {/* Fasting Guide */}
-              <div className="p-5 rounded-xl bg-gradient-to-br from-gold/5 to-amber-500/5 border border-gold/10">
-                <h3 className="text-sm font-medium text-foreground mb-3">Ngày Ăn Chay (Trai NH)</h3>
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <p>• Tối thiểu: Mùng 1, 15 hàng tháng (2 ngày)</p>
-                  <p>• Tốt hơn: Thêm mùng 8, 14, 23, 29 (6 ngày)</p>
-                  <p>• Lý tưởng: 10 ngày trai hoặc trường chay</p>
-                  <p>• Ngày trai: không ăn thịt, hải sản, trứng</p>
-                  <p>• Tâm thanh tịnh, niệm kinh linh ứng hơn</p>
+              {/* Quick links */}
+              <div className="rounded-2xl bg-card border border-border p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <BookOpen className="w-4 h-4 text-gold" />
+                  <h3 className="text-sm font-bold text-foreground">Khai Thị Theo Ngày Vía</h3>
                 </div>
-              </div>
-
-              {/* External Links */}
-              <div className="p-5 rounded-xl bg-card border border-border">
-                <h3 className="text-sm font-medium text-foreground mb-3">Tham Khảo Thêm</h3>
-                <div className="space-y-2">
-                  {[
-                    { label: "Lịch Vạn Niên", href: "https://lichvannien.net" },
-                    { label: "Kinh Niệm Hàng Ngày", href: "https://www.guanyincitta.info" },
-                    { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
-                  ].map((l) => (
-                    <a
-                      key={l.label}
-                      href={l.href}
-                      target={l.href.startsWith("http") ? "_blank" : undefined}
-                      rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                      className="block px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-gold hover:bg-secondary transition-colors"
-                    >
-                      {l.label} →
+                <div className="space-y-1.5">
+                  {SPECIAL_DAYS.filter((s) => s.teachingSlug).slice(0, 5).map((s) => (
+                    <a key={s.teachingSlug} href={`/teachings/${s.teachingSlug}`}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-gold transition-colors group py-1">
+                      <s.icon className="w-3.5 h-3.5" />
+                      <span className="group-hover:underline line-clamp-1">{s.name}</span>
                     </a>
                   ))}
                 </div>
@@ -250,6 +602,8 @@ export default function LunarCalendarPage() {
           </div>
         </div>
       </main>
+
+      <DayDrawer detail={selectedDay} onClose={() => setSelectedDay(null)} />
       <Footer />
       <StickyBanner />
     </div>

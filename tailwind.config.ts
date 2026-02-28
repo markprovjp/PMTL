@@ -19,7 +19,7 @@ export default {
     extend: {
       fontFamily: {
         display: ["Playfair Display", "Georgia", "serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        body: ["Be Vietnam Pro", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

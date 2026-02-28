@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Header from "@/components/Header";
-import Breadcrumbs from "@/components/Breadcrumbs";
+
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { ArrowRightIcon } from "@/components/icons/ZenIcons";
@@ -61,12 +61,7 @@ export default function BeginnerGuideClient({ initialGuides }: { initialGuides: 
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <Breadcrumbs
-            centered
-            items={[
-              { label: 'Hướng dẫn sơ học' }
-            ]}
-          />
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mb-10">
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Dành Cho Người Mới</p>
             <h1 className="font-display text-4xl md:text-5xl text-foreground mb-4">Hướng Dẫn Sơ Học</h1>

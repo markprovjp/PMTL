@@ -32,6 +32,7 @@ export interface CommunityPost {
   cover_image: any
   video_url?: string
   author_name: string
+  author_avatar?: string
   author_country?: string
   author?: any
   likes: number
@@ -50,6 +51,7 @@ export interface CommunityComment {
   documentId: string
   content: string
   author_name: string
+  author_avatar?: string
   author_country?: string
   likes: number
   createdAt: string
@@ -84,8 +86,8 @@ export async function fetchPosts(params?: {
   pageSize?: number
 }): Promise<{ posts: CommunityPost[]; total: number }> {
   const qs = new URLSearchParams()
+  // Chỉ cần populate cover_image; backend custom find() tự join comments qua db.query
   qs.append('populate[0]', 'cover_image')
-  qs.append('populate[1]', 'comments')
   qs.set('pagination[page]', String(params?.page || 1))
   qs.set('pagination[pageSize]', String(params?.pageSize || 20))
 
@@ -115,7 +117,8 @@ export async function fetchPosts(params?: {
 }
 
 export async function fetchPostById(id: string | number): Promise<CommunityPost> {
-  const res = await fetch(`${API}/api/community-posts/${id}?populate[0]=cover_image&populate[1]=comments`)
+  // Custom findOne() trả về data kèm comments tự động, không cần truyền populate
+  const res = await fetch(`${API}/api/community-posts/${id}`)
   if (!res.ok) throw new Error('Không tìm thấy bài viết')
   const json = await res.json()
   const raw = json.data
@@ -153,6 +156,19 @@ export async function viewPost(id: string | number): Promise<number> {
   return json.views || 0
 }
 
+export async function uploadFile(file: File): Promise<number | undefined> {
+  const formData = new FormData()
+  formData.append('files', file)
+  const res = await fetch(`${API}/api/upload`, {
+    method: 'POST',
+    body: formData,
+    headers: { ...authHeaders() },
+  })
+  if (!res.ok) throw new Error('Upload ảnh thất bại')
+  const json = await res.json()
+  return json[0]?.id
+}
+
 export async function submitPost(data: {
   title: string
   content: string
@@ -160,8 +176,10 @@ export async function submitPost(data: {
   category: string
   author_name: string
   author_country: string
+  author_avatar?: string
   video_url?: string
   tags?: string | string[]
+  cover_image?: number | string
 }): Promise<void> {
   const res = await fetch(`${API}/api/community-posts/submit`, {
     method: 'POST',
@@ -182,6 +200,7 @@ export async function submitComment(data: {
   content: string
   author_name: string
   author_country: string
+  author_avatar?: string
   parent_comment?: string | number
 }): Promise<void> {
   const res = await fetch(`${API}/api/community-comments/submit`, {

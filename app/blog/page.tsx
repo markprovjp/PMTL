@@ -11,7 +11,7 @@ import StickyBanner from '@/components/StickyBanner'
 import BlogListClient from '@/components/BlogListClient'
 import { getPosts, getCategories } from '@/lib/api/blog'
 import type { BlogPost } from '@/types/strapi'
-import Breadcrumbs from '@/components/Breadcrumbs'
+
 
 export const metadata: Metadata = {
   title: 'Blog & Chia Sẻ | Tin Tức & Phản Hồi',
@@ -97,12 +97,7 @@ export default async function BlogPage() {
       <main className="py-16">
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center mb-12">
-            <Breadcrumbs
-              centered
-              items={[
-                { label: 'Blog' }
-              ]}
-            />
+
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">
               Blog &amp; Chia Sẻ
             </p>

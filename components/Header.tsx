@@ -76,8 +76,10 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
       label: "Tu Học",
       items: [
         { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
-        { label: "Lịch Tu Học", href: "/lunar-calendar" },
         { label: "Hỏi Đáp Phật Học", href: "/qa" },
+        { label: "Thư Viện Kinh Sách", href: "/library" },
+        { label: "Phim Truyện & Video", href: "/videos" },
+        { label: "Đài Phát Thanh", href: "/radio" },
         { label: "Danh Bạ Toàn Cầu", href: "/directory" },
       ]
     },
@@ -85,7 +87,6 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
       id: 'cong-dong',
       label: "Cộng Đồng",
       items: [
-        { label: "Chứng Nghiệm & Chia Sẻ", href: "/shares" },
         { label: "Sự Kiện & Pháp Hội", href: "/events" },
       ]
     },
@@ -138,6 +139,18 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
           Trang Chủ
         </Link>
 
+        <Link href="/blog" onClick={onClose} className="block py-3 px-2 text-base font-display text-foreground border-b border-border/50">
+          Khai Thị (Blog)
+        </Link>
+
+        <Link href="/lunar-calendar" onClick={onClose} className="block py-3 px-2 text-base font-display text-foreground border-b border-border/50">
+          Lịch Tu Học
+        </Link>
+
+        <Link href="/shares" onClick={onClose} className="block py-3 px-2 text-base font-display text-foreground border-b border-border/50">
+          Diễn Đàn Đồng Tu
+        </Link>
+
         {sections.map((s) => (
           <div key={s.id} className="border-b border-border/50">
             <button
@@ -163,7 +176,7 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
 
         <div className="border-b border-border/50">
           <button onClick={() => setOpenSection(openSection === 'khai-thi' ? null : 'khai-thi')} className="w-full flex items-center justify-between py-4 px-2 text-left font-display text-base text-gold">
-            Khai Thị (Chủ đề)
+            Chủ Đề Khai Thị
             <motion.span animate={{ rotate: openSection === 'khai-thi' ? 180 : 0 }}><ChevronDown /></motion.span>
           </button>
           <AnimatePresence>
@@ -193,12 +206,13 @@ const Header = () => {
   const groups = {
     tuHoc: [
       { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
-      { label: "Lịch Tu Học", href: "/lunar-calendar" },
       { label: "Hỏi Đáp Phật Học", href: "/qa" },
+      { label: "Thư Viện Kinh Sách", href: "/library" },
+      { label: "Phim Truyện & Video", href: "/videos" },
+      { label: "Đài Phát Thanh", href: "/radio" },
       { label: "Danh Bạ Toàn Cầu", href: "/directory" },
     ],
     congDong: [
-      { label: "Chứng Nghiệm & Chia Sẻ", href: "/shares" },
       { label: "Sự Kiện & Pháp Hội", href: "/events" },
     ]
   };
@@ -228,6 +242,14 @@ const Header = () => {
 
               <Link href="/blog" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Khai Thị (Blog)
+              </Link>
+
+              <Link href="/lunar-calendar" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+                Lịch Tu Học
+              </Link>
+
+              <Link href="/shares" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+                Diễn Đàn Đồng Tu
               </Link>
 
               <NavDropdown

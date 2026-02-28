@@ -4,9 +4,7 @@
 // ─────────────────────────────────────────────────────────────
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import Header from '@/components/Header';
-import Breadcrumbs from '@/components/Breadcrumbs';
 import Footer from '@/components/Footer';
 import StickyBanner from '@/components/StickyBanner';
 import { toast } from 'sonner';
@@ -18,13 +16,13 @@ import {
   submitComment,
   likeComment,
   viewPost,
+  uploadFile,
   type CommunityPost,
   type CommunityComment,
 } from '@/lib/api/community';
-import { CheckCircle2, Info, Pin, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Info, Pin, ImageIcon, Globe } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-const STRAPI = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
 const CATEGORIES = ['Tất cả', 'Sức Khoẻ', 'Gia Đình', 'Sự Nghiệp', 'Hôn Nhân', 'Tâm Linh', 'Thi Cử', 'Kinh Doanh', 'Mất Ngủ', 'Mối Quan Hệ'];
 
 /* ── Icons ────────────────────────────────────────────────── */
@@ -177,9 +175,13 @@ const PostCard = ({ post, onOpen, onLike, liked }: PostCardProps) => (
 
       {/* Author */}
       <div className="flex items-center gap-2">
-        <div className={avatar(post.author_name, 7)}>
-          {initials(post.author_name)}
-        </div>
+        {post.author_avatar ? (
+          <img src={post.author_avatar} alt={post.author_name} className="w-7 h-7 rounded-full object-cover" />
+        ) : (
+          <div className={avatar(post.author_name, 7)}>
+            {initials(post.author_name)}
+          </div>
+        )}
         <div className="min-w-0">
           <p className="text-xs font-medium text-foreground/80 truncate">{post.author_name}</p>
           {post.author_country && <p className="text-[10px] text-muted-foreground truncate">@ {post.author_country}</p>}
@@ -207,13 +209,22 @@ const PostCard = ({ post, onOpen, onLike, liked }: PostCardProps) => (
 
 /* ══════════════════════ COMMENT ITEM ═══════════════════════════ */
 const CommentItem = ({ comment, postId }: { comment: CommunityComment; postId: string | number }) => {
+  const { user } = useAuth();
   const [likes, setLikes] = useState(comment.likes);
   const [liked, setLiked] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [reply, setReply] = useState('');
   const [replyName, setReplyName] = useState('');
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setReplyName(user.fullName || user.username || '');
+    } else {
+      const saved = localStorage.getItem('pmtl_author_name');
+      if (saved) setReplyName(saved);
+    }
+  }, [user]);
 
   const handleLike = async () => {
     if (liked) return;
@@ -231,13 +242,24 @@ const CommentItem = ({ comment, postId }: { comment: CommunityComment; postId: s
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reply.trim() || !replyName.trim()) return;
+    const finalName = user ? (user.fullName || user.username) : replyName;
+    if (!reply.trim() || !finalName.trim()) {
+      if (!finalName.trim()) toast.error('Vui lòng nhập tên của bạn');
+      return;
+    }
     setSending(true);
     try {
-      await submitComment({ postId, content: reply, author_name: replyName, author_country: '', parent_comment: comment.id });
+      await submitComment({
+        postId,
+        content: reply,
+        author_name: finalName,
+        author_country: '',
+        parent_comment: comment.id,
+        author_avatar: user?.avatar_url || undefined
+      });
       toast.success('Trả lời đã được gửi và đang chờ duyệt');
       setReply('');
-      setReplyName('');
+      if (!user) localStorage.setItem('pmtl_author_name', finalName);
       setShowReply(false);
     } catch {
       toast.error('Gửi trả lời thất bại');
@@ -248,7 +270,11 @@ const CommentItem = ({ comment, postId }: { comment: CommunityComment; postId: s
 
   return (
     <div className="flex gap-3">
-      <div className={avatar(comment.author_name, 8)}>{initials(comment.author_name)}</div>
+      {comment.author_avatar ? (
+        <img src={comment.author_avatar} alt={comment.author_name} className="w-8 h-8 rounded-full object-cover" />
+      ) : (
+        <div className={avatar(comment.author_name, 8)}>{initials(comment.author_name)}</div>
+      )}
       <div className="flex-1 min-w-0">
         <div className="bg-secondary/50 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -268,10 +294,30 @@ const CommentItem = ({ comment, postId }: { comment: CommunityComment; postId: s
         </div>
         {showReply && (
           <form onSubmit={handleReply} className="mt-2 flex flex-col gap-2">
-            <input value={replyName} onChange={(e) => setReplyName(e.target.value)} placeholder="Tên bạn..." required className="px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 w-48" />
+            {!user && !localStorage.getItem('pmtl_author_name') && (
+              <input
+                value={replyName}
+                onChange={(e) => setReplyName(e.target.value)}
+                placeholder="Tên bạn..."
+                required
+                className="px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 w-48"
+              />
+            )}
             <div className="flex gap-2">
-              <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Viết trả lời..." required className="flex-1 px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50" />
-              <button type="submit" disabled={sending} className="px-3 py-1.5 rounded-lg bg-primary text-xs text-primary-foreground disabled:opacity-50">Gửi</button>
+              <input
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                placeholder={user || replyName ? `Trả lời ${comment.author_name}...` : "Viết trả lời..."}
+                required
+                className="flex-1 px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50"
+              />
+              <button
+                type="submit"
+                disabled={sending}
+                className="px-3 py-1.5 rounded-lg bg-primary text-xs font-bold text-primary-foreground disabled:opacity-50 hover:bg-gold transition-colors"
+              >
+                Gửi
+              </button>
             </div>
           </form>
         )}
@@ -288,24 +334,37 @@ const DetailModal = ({ post, onClose, onLike, liked }: DetailModalProps) => {
   const [commentName, setCommentName] = useState('');
   const [commentCountry, setCommentCountry] = useState('');
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (!post) return;
     setComments(post.comments || []);
-    setCommentName(user ? (user.fullName || user.username) : '');
+
+    if (user) {
+      setCommentName(user.fullName || user.username || '');
+    } else {
+      const saved = localStorage.getItem('pmtl_author_name');
+      if (saved) setCommentName(saved);
+    }
     setCommentCountry('');
   }, [post, user]);
 
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim() || !commentName.trim()) return;
+    const finalName = user ? (user.fullName || user.username) : commentName;
+    if (!commentText.trim() || !finalName.trim()) return;
     setSending(true);
     try {
-      await submitComment({ postId: post!.documentId, content: commentText, author_name: commentName, author_country: commentCountry });
+      await submitComment({
+        postId: post!.documentId,
+        content: commentText,
+        author_name: finalName,
+        author_country: commentCountry,
+        author_avatar: user?.avatar_url || undefined
+      });
       toast.success('Bình luận đã được gửi và đang chờ duyệt');
       setCommentText('');
+      if (!user) localStorage.setItem('pmtl_author_name', finalName);
     } catch {
       toast.error('Gửi bình luận thất bại');
     } finally {
@@ -342,71 +401,91 @@ const DetailModal = ({ post, onClose, onLike, liked }: DetailModalProps) => {
               </button>
             </div>
 
-            <div className="px-6 pb-6 space-y-5">
-              {/* Cover */}
-              {post.coverUrl && (
-                <div className="aspect-video rounded-xl overflow-hidden -mx-6 mt-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${post.id}/640/360`; }} />
+            <div className="px-5 pb-6 space-y-4">
+              {/* Author at the top */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  {post.author_avatar ? (
+                    <img src={post.author_avatar} alt={post.author_name} className="w-10 h-10 rounded-full object-cover border border-border" />
+                  ) : (
+                    <div className={`${avatar(post.author_name, 10)} text-base`}>{initials(post.author_name)}</div>
+                  )}
+                  <div className="flex flex-col">
+                    <h3 className="font-semibold text-[15px] text-foreground flex items-center gap-1.5 leading-tight">
+                      {post.author_name}
+                      {post.author_country && <span className="text-muted-foreground font-normal text-xs">@ {post.author_country}</span>}
+                    </h3>
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                      {timeAgo(post.createdAt)}
+                      <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/50" />
+                      <Globe className="w-3 h-3 text-muted-foreground/70" />
+                    </div>
+                  </div>
+                </div>
+                {post.rating && (
+                  <div className="flex gap-0.5 mt-1">
+                    {[1, 2, 3, 4, 5].map((i) => <StarIcon key={i} filled={i <= post.rating!} />)}
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Content */}
+              <div className="space-y-2.5 pt-1">
+                <h2 className="font-display text-lg sm:text-xl text-foreground font-semibold leading-snug">{post.title}</h2>
+                <div className={`text-[15px] text-foreground/90 leading-relaxed whitespace-pre-wrap ${post.type === 'feedback' ? 'italic border-l-4 border-gold/30 pl-4 bg-gold/5 p-3 rounded-r-xl' : ''}`}>
+                  {post.content}
+                </div>
+              </div>
+
+              {/* Cover / Video */}
+              {post.coverUrl && post.type !== 'video' && (
+                <div className="rounded-xl overflow-hidden -mx-5 bg-black/5 flex items-center justify-center relative">
+                  <img src={post.coverUrl} alt={post.title} className="w-full h-auto max-h-[60vh] object-contain" onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${post.id}/640/360`; }} />
                 </div>
               )}
 
-              {/* Video */}
               {post.type === 'video' && post.video_url && (
-                <div className="aspect-video rounded-xl overflow-hidden bg-black -mx-6 mt-0 relative group">
-                  {post.coverUrl && <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover" />}
-                  <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/60 transition-colors">
-                    <div className="w-20 h-20 rounded-full bg-gold text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                <div className="aspect-video rounded-xl overflow-hidden bg-black -mx-5 relative group">
+                  {post.coverUrl && <img src={post.coverUrl} alt={post.title} className="w-full h-full object-cover opacity-75 group-hover:opacity-60 transition-opacity" />}
+                  <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-gold/90 text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-transform backdrop-blur-sm">
                       <PlayIcon className="w-8 h-8 ml-1" />
                     </div>
                   </a>
                 </div>
               )}
 
-              {/* Title & Meta */}
-              <div className="pt-1">
-                <h2 className="font-display text-2xl text-foreground leading-tight mb-3">{post.title}</h2>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <div className={`${avatar(post.author_name, 7)} inline-flex`}>{initials(post.author_name)}</div>
-                  <span className="font-medium text-foreground/80">{post.author_name}</span>
-                  {post.author_country && <span>@ {post.author_country}</span>}
-                  <span className="ml-auto">{timeAgo(post.createdAt)}</span>
-                </div>
-              </div>
-
-              {/* Rating */}
-              {post.rating && (
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((i) => <StarIcon key={i} filled={i <= post.rating!} />)}
-                </div>
-              )}
-
-              {/* Content */}
-              <div className={`text-sm text-foreground/75 leading-relaxed ${post.type === 'feedback' ? 'italic text-base border-l-4 border-gold/30 pl-4' : ''}`}>
-                {post.content}
-              </div>
-
               {/* Tags */}
               {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 pt-2">
                   {post.tags.map((t) => (
-                    <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">#{t}</span>
+                    <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-md bg-secondary text-muted-foreground/80 lowercase">#{t}</span>
                   ))}
                 </div>
               )}
 
-              {/* Stats + Like */}
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/50 border border-border/50">
-                <button onClick={() => onLike(post.documentId)} className={`flex items-center gap-2 text-sm font-medium transition-all px-4 py-2 rounded-xl ${liked ? 'bg-rose-500/15 text-rose-400' : 'bg-secondary text-muted-foreground hover:bg-rose-500/10 hover:text-rose-400'}`}>
-                  <HeartIcon filled={liked} className="w-4 h-4" />
-                  {fmt(post.likes + (liked ? 1 : 0))} Yêu thích
+              {/* Stats */}
+              <div className="flex items-center justify-between py-3 border-y border-border text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 bg-rose-500/10 text-rose-500 px-2.5 py-1 rounded-full text-xs font-medium">
+                  <HeartIcon filled className="w-3.5 h-3.5" />
+                  {fmt(post.likes + (liked ? 1 : 0))}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 text-xs">
+                  <span className="cursor-pointer hover:text-foreground transition-colors">{comments.length} bình luận</span>
+                  <span className="flex items-center gap-1 cursor-default"><EyeIcon className="w-3.5 h-3.5" /> {fmt(post.views)} lượt xem</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pb-2">
+                <button onClick={() => onLike(post.documentId)} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold transition-colors ${liked ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' : 'bg-secondary text-foreground hover:bg-secondary/80'}`}>
+                  <HeartIcon filled={liked} className="w-5 h-5" />
+                  {liked ? 'Đã yêu thích' : 'Yêu thích'}
                 </button>
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <EyeIcon className="w-4 h-4" />{fmt(post.views)} lượt xem
-                </span>
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <ChatIcon className="w-4 h-4" />{comments.length} bình luận
-                </span>
+                <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold bg-secondary text-foreground cursor-default">
+                  <ChatIcon className="w-5 h-5" />
+                  Bình luận
+                </div>
               </div>
 
               {/* Comments Section */}
@@ -429,8 +508,9 @@ const DetailModal = ({ post, onClose, onLike, liked }: DetailModalProps) => {
                 <form onSubmit={handleComment} className="space-y-3 pt-4 border-t border-border">
                   <h4 className="text-sm font-medium text-foreground">Để lại cảm nghĩ</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <input value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Tên bạn *" required className="px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition-colors" />
-                    <input value={commentCountry} onChange={(e) => setCommentCountry(e.target.value)} placeholder="Quốc gia" className="px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition-colors" />
+                    {(!user && !localStorage.getItem('pmtl_author_name')) && (
+                      <input value={commentName} onChange={(e) => setCommentName(e.target.value)} placeholder="Tên bạn *" required className="px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition-colors" />
+                    )}
                   </div>
                   <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Chia sẻ cảm nghĩ, kinh nghiệm của bạn..." required rows={3} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 transition-colors resize-none" />
                   <div className="flex items-center justify-between">
@@ -456,6 +536,8 @@ const SubmitModal = ({ onClose, user }: { onClose: () => void; user: any }) => {
     author_name: user ? (user.fullName || user.username) : '',
     author_country: '', video_url: '', tags: '',
   });
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -463,14 +545,32 @@ const SubmitModal = ({ onClose, user }: { onClose: () => void; user: any }) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setCoverFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSending(true);
     try {
+      let cover_image;
+      if (coverFile) {
+        cover_image = await uploadFile(coverFile);
+      }
       await submitPost({
         ...form,
         video_url: form.video_url || undefined,
         tags: form.tags || undefined,
+        cover_image: cover_image || undefined,
+        author_avatar: user?.avatar_url || undefined,
       });
       toast.success('Bài viết đã được gửi và đang chờ duyệt');
       setSent(true);
@@ -544,6 +644,28 @@ const SubmitModal = ({ onClose, user }: { onClose: () => void; user: any }) => {
               </div>
             )}
 
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">Ảnh bìa cho bài viết</label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-border/50 transition-colors">
+                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                    {coverFile ? 'Đổi ảnh bìa' : 'Tải ảnh lên'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  </label>
+                  {coverFile && <span className="text-xs text-muted-foreground truncate w-40">{coverFile.name}</span>}
+                </div>
+                {coverPreview && (
+                  <div className="relative aspect-video rounded-xl overflow-hidden border border-border bg-secondary">
+                    <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors">
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-muted-foreground">Họ tên *</label>
@@ -602,7 +724,7 @@ export default function SharesPage() {
   const [sort, setSort] = useState('newest');
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [showSubmit, setShowSubmit] = useState(false);
-  const [likedIds, setLikedIds] = useState<Set<string | number>>(new Set());
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const searchTimeout = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -610,7 +732,7 @@ export default function SharesPage() {
       const stored = localStorage.getItem('pmtl_liked_community');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) setLikedIds(new Set(parsed));
+        if (Array.isArray(parsed)) setLikedIds(new Set(parsed.map(String)));
       }
     } catch { }
   }, []);
@@ -629,7 +751,7 @@ export default function SharesPage() {
     }
   }, [search, category, sort]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -648,22 +770,26 @@ export default function SharesPage() {
   };
 
   const handleLike = async (id: string | number) => {
-    if (likedIds.has(id)) return;
+    const sid = String(id);
+    if (likedIds.has(sid)) {
+      toast.info('Bạn đã thích bài viết này rồi');
+      return;
+    }
 
     setLikedIds((prev) => {
       const n = new Set(prev);
-      n.add(id);
+      n.add(sid);
       localStorage.setItem('pmtl_liked_community', JSON.stringify(Array.from(n)));
       return n;
     });
 
     try {
-      await likePost(id);
+      await likePost(sid);
       toast.success('Đã thích bài viết');
     } catch {
       setLikedIds((prev) => {
         const n = new Set(prev);
-        n.delete(id);
+        n.delete(sid);
         localStorage.setItem('pmtl_liked_community', JSON.stringify(Array.from(n)));
         return n;
       });
@@ -692,45 +818,50 @@ export default function SharesPage() {
 
       <main className="py-16">
         <div className="container mx-auto px-6">
-          <Breadcrumbs centered items={[{ label: 'Chia Sẻ Cộng Đồng' }]} />
-
-          {/* ── Hero ─────────────────────────────────────────── */}
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto text-center mb-16">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="h-px w-10 bg-gold/40" />
-              <span className="text-gold text-xs font-semibold uppercase tracking-[0.3em]">Diễn Đàn Đồng Tu</span>
-              <div className="h-px w-10 bg-gold/40" />
-            </div>
-            <h1 className="font-display text-4xl md:text-5xl text-foreground mb-6 leading-tight">
-              NGƯỜI THẬT<br /><span className="text-gold">VIỆC THẬT</span>
-            </h1>
-            <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-8">
-              Những câu chuyện người thật việc thật từ đồng tu khắp thế giới. Giọt nước mắt sám hối, niềm vui khi bệnh tiêu tan,
-              hạnh phúc khi gia đình hòa hợp — hãy chia sẻ để truyền cảm hứng.
-            </p>
-            <button
-              onClick={() => setShowSubmit(true)}
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gold text-black font-semibold hover:bg-gold/90 active:scale-95 transition-all shadow-lg shadow-gold/20"
+          {/* ── Compact Hero Section ─────────────────────────── */}
+          <div className="relative mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-4xl mx-auto text-center"
             >
-              <PlusIcon className="w-5 h-5" />
-              Chia Sẻ Câu Chuyện Của Bạn
-            </button>
-          </motion.div>
-
-          {/* ── Stats Bar ──────────────────────────────────────── */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border rounded-2xl overflow-hidden mb-16">
-            {[
-              { value: total > 0 ? `${total}+` : '—', label: 'Câu Chuyện' },
-              { value: '50+', label: 'Quốc Gia' },
-              { value: '10M+', label: 'Lượt Đọc' },
-              { value: '4.9★', label: 'Đánh Giá TB' },
-            ].map((s) => (
-              <div key={s.label} className="bg-card py-6 text-center">
-                <p className="font-display text-2xl text-gold">{s.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-gold/10 border border-gold/20 text-gold text-[10px] font-bold uppercase tracking-widest mb-4">
+                Diễn Đàn Đồng Tu
               </div>
-            ))}
-          </motion.div>
+
+              <h1 className="font-display text-3xl md:text-5xl text-foreground mb-4 leading-tight">
+                NGƯỜI THẬT <span className="text-gold">VIỆC THẬT</span>
+              </h1>
+
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-2xl mx-auto mb-8">
+                Những chia sẻ người thật việc thật từ đồng tu khắp thế giới — Hãy cùng lan tỏa năng lượng thiện lành và truyền cảm hứng tu học.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pb-8 border-b border-border/50">
+                <button
+                  onClick={() => setShowSubmit(true)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gold text-black font-bold hover:bg-gold/90 active:scale-95 transition-all shadow-lg shadow-gold/10 text-sm"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  Chia Sẻ Câu Chuyện
+                </button>
+
+                <div className="flex items-center gap-8 text-sm">
+                  {[
+                    { value: total > 0 ? `${total}+` : '—', label: 'Bài viết' },
+                    { value: '50+', label: 'Quốc Gia' },
+                    { value: '10M+', label: 'Lượt Đọc' },
+                    { value: '4.9★', label: 'Đánh giá' },
+                  ].map((s) => (
+                    <div key={s.label} className="text-left">
+                      <p className="font-display text-lg text-gold leading-none">{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
 
           {/* ── Filter Bar ─────────────────────────────────────── */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="mb-8 space-y-4">
@@ -769,7 +900,7 @@ export default function SharesPage() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {pinned.map((post) => (
-                  <PostCard key={post.id} post={post} onOpen={handleOpenPost} onLike={handleLike} liked={likedIds.has(post.documentId)} />
+                  <PostCard key={post.id} post={post} onOpen={handleOpenPost} onLike={handleLike} liked={likedIds.has(String(post.documentId))} />
                 ))}
               </div>
             </div>
@@ -793,7 +924,7 @@ export default function SharesPage() {
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.4, delay: (i % 4) * 0.06 }}
                 >
-                  <PostCard post={post} onOpen={handleOpenPost} onLike={handleLike} liked={likedIds.has(post.documentId)} />
+                  <PostCard post={post} onOpen={handleOpenPost} onLike={handleLike} liked={likedIds.has(String(post.documentId))} />
                 </motion.div>
               ))}
             </div>
@@ -816,23 +947,6 @@ export default function SharesPage() {
               </button>
             </motion.div>
           )}
-
-          {/* ── Bottom CTA ─────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-20 p-10 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 text-center"
-          >
-            <div className="h-px w-16 bg-gradient-to-r from-transparent via-gold/50 to-transparent mx-auto mb-6" />
-            <h3 className="font-display text-2xl md:text-3xl text-foreground mb-4">Bạn Cũng Có Câu Chuyện?</h3>
-            <p className="text-muted-foreground text-sm max-w-lg mx-auto mb-7">
-              Nếu bạn đã trải nghiệm sự thay đổi kỳ diệu nhờ tu học, hãy chia sẻ để truyền cảm hứng cho hàng nghìn đồng tu khác.
-            </p>
-            <button onClick={() => setShowSubmit(true)} className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium text-sm">
-              <PlusIcon /> Đăng Bài Chia Sẻ
-            </button>
-          </motion.div>
         </div>
       </main>
 

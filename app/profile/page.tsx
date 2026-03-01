@@ -16,21 +16,6 @@ import { updateMe, uploadAvatarFile } from '@/lib/api/user'
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'
 
-// ─── Thành phần thẻ thống kê ───────────────────────────────
-const StatCard = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="bg-secondary rounded-xl p-4 text-center">
-    <p className="text-2xl font-display text-gold font-bold">{value}</p>
-    <p className="text-xs text-muted-foreground mt-1">{label}</p>
-  </div>
-)
-
-// ─── Thành phần hàng thông tin (chỉ đọc) ───────────────────
-const InfoRow = ({ label, value }: { label: string; value?: string | null }) => (
-  <div className="flex items-start gap-4 py-3 border-b border-border last:border-0">
-    <span className="text-xs text-muted-foreground w-32 flex-shrink-0 pt-0.5">{label}</span>
-    <span className="text-sm text-foreground flex-1">{value || '—'}</span>
-  </div>
-)
 
 // ─── Field nhập liệu ───────────────────────────────────────
 const Field = ({
@@ -195,7 +180,7 @@ export default function ProfilePage() {
       <Header />
 
       <main className="py-12">
-        <div className="container mx-auto px-6 max-w-3xl">
+        <div className="container mx-auto px-6 ">
           <Breadcrumbs items={[{ label: 'Hồ sơ cá nhân' }]} />
 
           {/* ── Profile header card ─────────────────────────── */}
@@ -310,46 +295,19 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* ── Stats ──────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="grid grid-cols-3 gap-4 mb-6"
-          >
-            <StatCard label="Bài đã đọc" value={0} />
-            <StatCard label="Bình luận" value={0} />
-            <StatCard label="Yêu thích" value={0} />
-          </motion.div>
-
-          {/* ── Thông tin tài khoản (đọc) ──────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-card border border-border rounded-2xl p-6 mb-6"
-          >
-            <h2 className="font-display text-lg text-foreground mb-4">Thông tin tài khoản</h2>
-            <InfoRow label="Họ và tên" value={user.fullName} />
-            <InfoRow label="Pháp danh" value={user.dharmaName} />
-            <InfoRow label="Email" value={user.email} />
-            <InfoRow label="Số điện thoại" value={user.phone} />
-            <InfoRow label="Địa chỉ" value={user.address} />
-            <InfoRow label="Giới thiệu" value={user.bio} />
-            <InfoRow
-              label="Trạng thái"
-              value={user.confirmed ? 'Đã xác thực' : 'Chưa xác thực email'}
-            />
-          </motion.div>
-
-          {/* ── Form chỉnh sửa ──────────────────────────────── */}
+          {/* ── Form thông tin ──────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="bg-card border border-border rounded-2xl p-6"
           >
-            <h2 className="font-display text-lg text-foreground mb-4">Chỉnh sửa hồ sơ</h2>
+            <h2 className="font-display text-lg text-foreground mb-4">Thông tin tài khoản</h2>
+
+            <div className="mb-4">
+              <label className="text-xs text-muted-foreground block mb-1">Email (Đăng nhập)</label>
+              <input value={user.email} disabled className="w-full rounded-lg bg-background border border-border px-3 py-2 text-sm text-muted-foreground opacity-70" />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Họ và tên" name="fullName" value={form.fullName} onChange={handleChange} />
               <Field label="Pháp danh" name="dharmaName" value={form.dharmaName} onChange={handleChange} />

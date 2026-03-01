@@ -91,7 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, jwt)
     setToken(jwt)
     setUser(userData)
-  }, [])
+    fetchMe(jwt)
+  }, [fetchMe])
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)

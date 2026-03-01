@@ -154,11 +154,6 @@ const DailyRecitationSteps = () => {
                 <div className="ml-4 md:ml-8 flex-1">
                   <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 md:p-8 hover:border-gold/30 hover:bg-card/80 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-gold/5 relative overflow-hidden">
 
-                    {/* Step Number Watermark */}
-                    <div className="absolute -right-4 -top-6 text-8xl font-display text-muted-foreground/5 font-bold pointer-events-none select-none group-hover:text-gold/5 transition-colors">
-                      0{step.id}
-                    </div>
-
                     <div className="relative z-10">
                       <div className="flex flex-wrap items-center gap-3 mb-3">
                         <h3 className="text-xl md:text-2xl font-display text-foreground group-hover:text-gold transition-colors">

@@ -6,38 +6,41 @@ import { ChevronDownIcon } from "@/components/icons/ZenIcons";
 
 const sections = [
   {
-    id: "what",
-    question: "1. Pháp Môn Tâm Linh Là Gì?",
-    answer: `Pháp Môn Tâm Linh được Quán Thế Âm Bồ Tát truyền thụ cho chúng sanh. Gồm Năm Đại Pháp Bảo: Niệm Kinh, Phát nguyện, Phóng sanh, Đọc Bạch Thoại Phật Pháp và Đại Sám Hối.
+    id: "lu-master",
+    question: "1. Giới Thiệu Trưởng Ban Đài Loan",
+    answer: `Trưởng Ban Đài Loan Lư Quân Hoành là người thành phố Giang Môn, tỉnh Quảng Đông, Trung Quốc. Năm 2015, tháng 1 tại sân vận động Rajamangala ở Kuala Lumpur (Malaysia) đã tổ chức đại pháp hội với hơn mười vạn người tham dự; tháng 4 tại Singapore tổ chức pháp hội, chấn động thế giới.
 
-"Tâm Linh" là Khóa, "Pháp Môn" là Chìa Khóa — dùng pháp môn mở ra tâm linh của quý vị, tức là "Pháp Môn Tâm Linh".
+Lư Quân Hoành vì quảng bá Phật pháp, hoằng dương văn hóa Trung Hoa, tăng tiến hòa bình thế giới, nhiều năm qua không ngừng đi khắp thế giới tổ chức pháp hội quy mô lớn, cứu độ chúng sinh.
 
-Đây là một kiến thức về tâm, bởi vì vạn vật trên thế gian "đều do tâm sinh ra", cứu người trước hết là cứu tâm. Và đây chính là một cánh cửa thần kỳ — bởi vì nó có thể mở ra trí tuệ nhân sinh, dẫn dắt chúng sinh đi lên con đường Phật đạo, ly khổ đắc lạc (lìa khổ được vui — thoát khỏi đau khổ và đạt được hạnh phúc).`,
+Từ năm 2012 đến nay, Sư phụ đã nhiều lần được các quốc gia mời đến diễn giảng, bao gồm Liên Hợp Quốc, Quốc hội Hoa Kỳ cùng các trường đại học trên thế giới, và đã nhận được nhiều giải thưởng.
+
+Sư phụ từng được trao “Giải thưởng Hòa bình Thế giới (Phật giáo)” cùng nhiều vinh dự khác. Sách Pháp Môn Tâm Linh do Sư phụ sáng lập đã được xuất bản hơn 10.000.000 quyển, lưu thông khắp thế giới, độ hóa vô số hữu duyên.`,
   },
   {
-    id: "who",
-    question: "2. Đài Trưởng Lư Quân Hoành Là Ai?",
-    answer: `Ngài tên Lư Quân Hoành, là người Hoa Kiều sống tại Úc, là đại diện cho cư sỹ tu tại gia. Ngài thành lập Đài Phát thanh Đông Phương để truyền bá Phật Pháp ở Úc và khắp nơi trên thế giới.
+    id: "three-dharmas",
+    question: "2. Khéo Dùng Ba Đại Pháp Bảo",
+    answer: `**Tụng Kinh**
+Tâm niệm Đại Bi, tâm lượng rộng lớn; tâm niệm Tâm Kinh, khai mở trí huệ. Chú Đại Bi tăng cường năng lượng, tiêu trừ tai nạn; Tâm Kinh khai mở trí huệ, tăng trưởng công đức. Kinh văn là lời khai thị của chư Phật Bồ Tát, có thể hóa giải các loại vấn đề trong đời sống. Tụng kinh khiến thân tâm thanh tịnh, trang nghiêm mỹ hảo.
 
-Nhận được sự khai thị của Quán Thế Âm Bồ Tát, Đài Trưởng Lư Quân Hoành giúp chúng sanh hiểu nhân biết quả, biết niệm Kinh Phật và sám hối. Thông qua đó có thể hóa giải oán kết, tai nạn, rủi ro, bệnh tật trong cuộc sống.
+**Phát Nguyện**
+Nguyện lực có thể cải biến vận mệnh, uy lực của nguyện lực đến từ tâm chân thành. Khi một người nguyện lực kiên cố, phát tâm chân chính, liền có thể đạt được gia trì và bảo hộ của chư Phật Bồ Tát. Phát nguyện không chỉ cần chân thành, mà còn phải lượng sức mà hành.
 
-Ngoài ra, Ngài còn là Chủ tịch Hội đồng Quản trị của tổ chức Từ thiện truyền thông Đông Phương-Úc, là chuyên gia tâm lý người Úc có bằng cấp cao, là Dato của Malaysia, là Giáo sư thỉnh giảng tại Đại học Siena, Ý.`,
+**Phóng Sinh**
+Phóng sinh là bố thí, là hành thiện, là từ bi; vì cứu độ sinh mạng, công đức không thể nghĩ bàn. Phóng sinh không những tiêu tai kéo dài thọ mạng, cát tường như ý, mà còn bồi dưỡng tâm từ bi của chính mình, tích lũy công đức phúc báo.`,
   },
   {
-    id: "precepts",
-    question: "3. Năm Đại Pháp Bảo Hoạt Động Như Thế Nào?",
-    answer: `Ba trụ cột quan trọng của Kinh văn Pháp môn Tâm linh là "Chú Đại Bi (大悲咒)", "Tâm Kinh (心经)" và "Lễ Phật Đại Sám Hối Văn (礼佛大忏悔文)".
+    id: "why-chant",
+    question: "3. Vì Sao Phải Tụng Kinh?",
+    answer: `Đừng để tâm linh chờ đợi thêm một phút nào nữa! Con cần kinh văn mỗi ngày để tăng trưởng năng lượng, cải thiện đời sống, thay đổi hoàn cảnh sinh hoạt. Vì trưởng bối, vì gia đình, vì con cái, vì tiền đồ, cần phải chăm chỉ tu hành, tinh tấn không ngừng, mới có thể đạt được hạnh phúc chân chính.
 
-• Chú Đại Bi có thể tăng cường năng lượng và giúp cơ thể khỏe mạnh
-• Tâm Kinh mở ra trí tuệ và hóa giải phiền não
-• Lễ Phật Đại Sám Hối Văn giúp sám hối tội lỗi và xóa bỏ nghiệp chướng
+Tụng kinh có thể tiêu tai giải nạn! Tụng kinh có thể sám hối nghiệp chướng, khiến tâm được thanh tịnh, khiến gia đình hòa thuận.
 
-Chỉ cần kiên trì niệm kinh, chúng ta có thể xóa bỏ nghiệp chướng, mọi việc sẽ thuận lợi và thay đổi vận mệnh của chính mình.`,
+Tụng kinh khiến tâm an tịnh, xa lìa phiền não! Tâm thanh tịnh thì thân an lạc, xuất sinh trí huệ, chuyển họa thành phúc, sở cầu như nguyện.`,
   },
 ];
 
 const AboutSection = () => {
-  const [openId, setOpenId] = useState<string | null>("what");
+  const [openId, setOpenId] = useState<string | null>("lu-master");
 
   return (
     <section className="py-20">
@@ -45,16 +48,16 @@ const AboutSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <p className="text-gold text-sm font-medium tracking-widest uppercase mb-3">Giới Thiệu</p>
             <h2 className="font-display text-3xl md:text-4xl text-foreground mb-6 leading-tight">
               Pháp Môn Tâm Linh<br />
-              <span className="gold-gradient-text">心灵法门</span>
+              <span className="gold-gradient-text">Hướng Dẫn Tu Học</span>
             </h2>
             <div className="zen-divider w-20 mb-6" />
-            <p className="text-muted-foreground leading-loose text-base mb-8">
+            <p className="text-muted-foreground leading-loose text-base mb-8 italic border-l-2 border-gold/30 pl-6">
               Nguyện rằng sẽ càng có thêm nhiều chúng sinh hữu duyên có thể lên được chiếc thuyền cứu độ của Quán Thế Âm Bồ Tát, tâm hồn thanh tịnh, thoát khổ an vui, tiêu trừ nghiệp chướng, siêu độ hữu duyên, trả sạch oán kết, quảng độ chúng sinh, đồng đăng cực lạc.
             </p>
 

@@ -114,14 +114,18 @@ const HeroSection = ({ slides, stats }: HeroSectionProps) => {
               className="space-y-6"
             >
               {/* Search Bar */}
-              <div className="max-w-xl relative group ">
+              <div
+                className="max-w-xl relative group cursor-pointer"
+                onClick={() => window.location.href = '/search'}
+              >
                 <div className="absolute inset-0 bg-gold/20 rounded-2xl blur group-hover:bg-gold/30 transition-colors opacity-50" />
                 <div className="relative flex items-center  backdrop-blur-xl border border-white/10 rounded-2xl p-2 transition-all group-hover:border-gold/50 shadow-2xl">
                   <SearchIcon className="w-6 h-6 ml-4 text-white hidden sm:block" />
                   <input
                     type="text"
+                    disabled
                     placeholder="Tìm kiếm kinh văn, khai thị, hoặc từ khóa..."
-                    className="w-full bg-transparent px-4 py-3 focus:outline-none  text-black"
+                    className="w-full bg-transparent px-4 py-3 focus:outline-none text-white/80 cursor-pointer placeholder:text-white/60"
                   />
                   <button className="px-6 py-3 rounded-xl bg-gold text-black font-medium hover:bg-gold-glow transition-colors shrink-0">
                     Tra Cứu

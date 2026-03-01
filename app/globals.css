@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 0 25% 98%;
-    --foreground: 0 0% 20%;
+    --background: 30 100% 98%;
+    --foreground: 30 40% 12%;
 
-    --card: 0 10% 95%;
-    --card-foreground: 0 0% 20%;
+    --card: 30 60% 96%;
+    --card-foreground: 30 40% 12%;
 
-    --popover: 0 10% 95%;
-    --popover-foreground: 0 0% 20%;
+    --popover: 30 60% 96%;
+    --popover-foreground: 30 40% 12%;
 
     --primary: 43 90% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 10% 90%;
-    --secondary-foreground: 0 0% 30%;
+    --secondary: 30 40% 94%;
+    --secondary-foreground: 30 30% 20%;
 
-    --muted: 30 8% 92%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 30 30% 94%;
+    --muted-foreground: 30 20% 45%;
 
     --accent: 43 70% 35%;
     --accent-foreground: 0 0% 100%;
@@ -30,35 +30,35 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 30 10% 85%;
-    --input: 30 10% 85%;
+    --border: 30 30% 90%;
+    --input: 30 30% 90%;
     --ring: 43 90% 38%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 10% 96%;
-    --sidebar-foreground: 0 0% 30%;
+    --sidebar-background: 30 80% 97%;
+    --sidebar-foreground: 30 40% 20%;
     --sidebar-primary: 43 90% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 10% 90%;
-    --sidebar-accent-foreground: 0 0% 30%;
-    --sidebar-border: 30 10% 85%;
+    --sidebar-accent: 30 40% 94%;
+    --sidebar-accent-foreground: 30 40% 20%;
+    --sidebar-border: 30 30% 90%;
     --sidebar-ring: 43 90% 38%;
 
     /* Custom tokens */
     --gold: 43 90% 38%;
     --gold-dim: 43 55% 32%;
     --gold-glow: 43 80% 50%;
-    --cream: 0 25% 98%;
+    --cream: 30 100% 98%;
     --zen-dark: 0 0% 10%;
-    --zen-surface: 0 10% 93%;
-    --zen-border: 30 10% 82%;
+    --zen-surface: 30 60% 95%;
+    --zen-border: 30 30% 88%;
 
     --font-display: "Playfair Display", Georgia, serif;
     --font-body: "Be Vietnam Pro", system-ui, sans-serif;
 
     --shadow-gold: 0 4px 30px -8px hsl(43 90% 38% / 0.15);
-    --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.12);
+    --shadow-elevated: 0 8px 40px -12px hsl(0 0% 0% / 0.08);
   }
 
   .dark {

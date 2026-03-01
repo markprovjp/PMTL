@@ -120,8 +120,12 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
         {user ? (
           <div className="flex items-center justify-between py-3 mb-4 border-b border-border">
             <Link href="/profile" onClick={onClose} className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center">
-                <span className="font-display text-sm text-gold">{(user.fullName || user.username)[0].toUpperCase()}</span>
+              <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center overflow-hidden">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-display text-sm text-gold">{(user.fullName || user.username)[0].toUpperCase()}</span>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">{user.fullName || user.username}</p>
@@ -294,8 +298,12 @@ const Header = () => {
               user ? (
                 <div className="relative hidden md:block">
                   <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gold/30 hover:border-gold/60 transition-all">
-                    <div className="w-5 h-5 rounded-full bg-gold/20 flex items-center justify-center">
-                      <span className="text-xs text-gold font-bold">{(user.fullName || user.username)[0].toUpperCase()}</span>
+                    <div className="w-5 h-5 rounded-full bg-gold/20 flex items-center justify-center overflow-hidden shrink-0">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-gold font-bold">{(user.fullName || user.username)[0].toUpperCase()}</span>
+                      )}
                     </div>
                     <span className="text-xs text-foreground max-w-24 truncate">{user.fullName || user.username}</span>
                     <ChevronDown />

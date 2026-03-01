@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import DailyRecitationSteps from "@/components/DailyRecitationSteps";
+import DailyRecitationQA from "@/components/DailyRecitationQA";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 
@@ -30,6 +31,7 @@ export default function DailyRecitationPage() {
 
         {/* Nội dung trang */}
         <DailyRecitationSteps />
+        <DailyRecitationQA />
       </main>
 
       <Footer />

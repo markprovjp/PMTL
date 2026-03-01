@@ -43,16 +43,37 @@ export async function getHomepageSettings(): Promise<SiteSetting | null> {
     })
     if (res.data) {
       if (res.data.heroSlides) {
-        res.data.heroSlides = res.data.heroSlides.map((slide: Record<string, any>) => ({
+        res.data.heroSlides = res.data.heroSlides.map((slide: any) => ({
           ...slide,
           src: getStrapiMediaUrl(slide.image?.url) ?? slide.src ?? '/images/hero-bg.jpg',
-        } as HeroSlide))
+        }))
       }
       if (res.data.gallerySlides) {
-        res.data.gallerySlides = res.data.gallerySlides.map((slide: Record<string, any>) => ({
+        res.data.gallerySlides = res.data.gallerySlides.map((slide: any) => ({
           ...slide,
           src: getStrapiMediaUrl(slide.image?.url) ?? slide.src ?? '/images/hero-bg.jpg',
-        } as GallerySlide))
+        }))
+      }
+      if (res.data.phapBao) {
+        res.data.phapBao = res.data.phapBao.map((item: any) => ({
+          ...item,
+          link: item.link || '#',
+        }))
+      }
+      if (res.data.actionCards) {
+        res.data.actionCards = res.data.actionCards.map((item: any) => ({
+          ...item,
+          link: item.link || '#',
+        }))
+      }
+      if (res.data.searchCategories) {
+        res.data.searchCategories = res.data.searchCategories.map((item: any) => ({
+          ...item,
+          link: item.link || '#',
+        }))
+      }
+      if (res.data.stickyBanner) {
+        res.data.stickyBanner.buttonLink = res.data.stickyBanner.buttonLink || '#';
       }
     }
     return res.data ?? null

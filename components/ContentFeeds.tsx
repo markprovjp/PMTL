@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { PlayIcon, BookIcon, ArrowRightIcon, SearchIcon } from "@/components/icons/ZenIcons";
+import { PlayIcon, BookIcon, ArrowRightIcon } from "@/components/icons/ZenIcons";
 import { getCategoriesClient } from "@/lib/api/categories-client";
 import type { Category } from "@/types/strapi";
 
@@ -14,22 +14,23 @@ const dharmaTalks = [
   { title: "Cầu con theo lời Phật dạy", category: "Cầu Con", duration: "20 phút" },
 ];
 
-const stories = [
-  { title: "Câu chuyện nhân quả: Lòng hiếu thảo cảm động trời đất", date: "25/02/2026" },
-  { title: "Sự mầu nhiệm của niệm Kinh Đại Bi Chú", date: "24/02/2026" },
-  { title: "Hành giả chia sẻ: Tu tập thay đổi cuộc đời", date: "23/02/2026" },
-  { title: "Phật pháp ứng dụng: Vượt qua khó khăn tài chính", date: "22/02/2026" },
-];
+import { fetchPosts, CommunityPost } from "@/lib/api/community";
 
 const ContentFeeds = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [latestStories, setLatestStories] = useState<CommunityPost[]>([]);
 
   useEffect(() => {
     getCategoriesClient().then(cats => {
       setCategories(cats);
       setLoading(false);
     });
+    fetchPosts({ pageSize: 4, category: "Tất cả" }).then(res => {
+      // you can filter or use them; here I just fetch 4 posts 
+      setLatestStories(res.posts);
+    }).catch(() => null);
   }, []);
 
   return (
@@ -88,20 +89,20 @@ const ContentFeeds = () => {
                   <h2 className="font-display text-3xl text-foreground">Chuyện Phật Pháp</h2>
                   <p className="text-sm text-muted-foreground">Chứng nghiệm mầu nhiệm từ đồng tu</p>
                 </div>
-                <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-gold-dim hover:text-gold transition-colors font-medium">
+                <Link href="/shares" className="inline-flex items-center gap-2 text-sm text-gold-dim hover:text-gold transition-colors font-medium">
                   Xem tất cả <ArrowRightIcon className="w-4 h-4" />
                 </Link>
               </div>
               <div className="space-y-3">
-                {stories.map((story, i) => (
+                {latestStories.map((story, i) => (
                   <motion.div
-                    key={story.title}
+                    key={story.id}
                     initial={{ opacity: 0, x: -10 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <Link href="/blog" className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50 hover:border-gold/30 transition-all group/item shadow-sm">
+                    <Link href={`/shares`} className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50 hover:border-gold/30 transition-all group/item shadow-sm">
                       <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover/item:bg-gold/10 transition-colors">
                         <BookIcon className="w-4 h-4 text-gold" />
                       </div>
@@ -109,7 +110,7 @@ const ContentFeeds = () => {
                         <h4 className="font-display text-lg text-foreground truncate group-hover/item:text-gold transition-colors">
                           {story.title}
                         </h4>
-                        <span className="text-xs text-muted-foreground mt-1">{story.date}</span>
+                        <span className="text-xs text-muted-foreground mt-1">{new Date(story.createdAt).toLocaleDateString('vi-VN')}</span>
                       </div>
                       <ArrowRightIcon className="w-4 h-4 text-muted-foreground/30 group-hover/item:translate-x-1 group-hover/item:text-gold transition-all" />
                     </Link>
@@ -121,19 +122,6 @@ const ContentFeeds = () => {
 
           {/* ── Sidebar (4/12) ── */}
           <aside className="lg:col-span-4 space-y-8">
-
-            {/* Search Box Link */}
-            <div className="p-6 rounded-2xl bg-gold/5 border border-gold/10 relative overflow-hidden group">
-              <div className="relative z-10">
-                <h3 className="font-display text-xl text-foreground mb-2">Tìm kiếm Khai thị</h3>
-                <p className="text-sm text-muted-foreground mb-5">Hàng ngàn câu trả lời cho mọi hoàn cảnh cuộc sống.</p>
-                <Link href="/search" className="w-full py-3 px-4 rounded-xl bg-background border border-border flex items-center gap-3 text-muted-foreground hover:border-gold/50 transition-all">
-                  <SearchIcon className="w-4 h-4" />
-                  <span className="text-sm">Nhập từ khóa...</span>
-                </Link>
-              </div>
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-gold/5 rounded-full blur-2xl group-hover:bg-gold/10 transition-colors" />
-            </div>
 
             {/* Dynamic Categories */}
             <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm">
@@ -175,14 +163,6 @@ const ContentFeeds = () => {
               </div>
             </div>
 
-            {/* Support Widget */}
-            <div className="p-6 rounded-2xl bg-secondary/50 border border-border text-center">
-              <h4 className="text-sm font-bold text-foreground mb-2">Cần giúp đỡ tu học?</h4>
-              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">Kết nối với ban biên tập để được hướng dẫn chi tiết về Pháp Môn Tâm Linh.</p>
-              <Link href="/qa" className="inline-block text-xs text-gold border-b border-gold/30 hover:border-gold transition-all pb-0.5">
-                Gửi câu hỏi của bạn
-              </Link>
-            </div>
 
           </aside>
         </div>

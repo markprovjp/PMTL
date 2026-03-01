@@ -27,6 +27,7 @@ import {
   Sword,
   type LucideIcon
 } from 'lucide-react';
+import { fetchLunarEvents } from '@/lib/api/lunar-calendar';
 
 /* ── Lazy-load lunar lib ─────────────────────────────────────── */
 // @forvn/vn-lunar-calendar — converts solar <-> Vietnamese lunar
@@ -42,10 +43,13 @@ interface SpecialDay {
   lunarMonth: number;
   lunarDay: number;
   name: string;
-  type: 'buddha' | 'bodhisattva' | 'teacher' | 'fast' | 'holiday';
+  type: 'buddha' | 'bodhisattva' | 'teacher' | 'fast' | 'holiday' | 'normal';
   teachingSlug?: string; // link to /teachings/xxx
   description: string;
   icon: LucideIcon;
+  reciteCount?: number;
+  solarDate?: string;
+  isRecurringLunar?: boolean;
 }
 
 /* ── Dữ liệu ngày đặc biệt theo LỊCH ÂM ─────────────────────
@@ -88,6 +92,7 @@ const TYPE_STYLE: Record<SpecialDay['type'], { bg: string; text: string; border:
   teacher: { bg: 'bg-gold/10', text: 'text-gold', border: 'border-gold/40', dot: 'bg-gold' },
   fast: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
   holiday: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30', dot: 'bg-purple-400' },
+  normal: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30', dot: 'bg-blue-400' },
 };
 
 // Emojis replaced with Lucide icons imported above.
@@ -102,6 +107,7 @@ const LotusMarker = ({ type }: { type: SpecialDay['type'] }) => {
     teacher: '#D4AF37',
     fast: '#10B981',
     holiday: '#A855F7',
+    normal: '#3B82F6',
   };
   const fill = colors[type] || '#D4AF37';
   return (
@@ -141,6 +147,20 @@ async function solarToLunar(year: number, month: number, day: number): Promise<L
   return { lunarDay: day, lunarMonth: month, lunarYear: year, isLeapMonth: false };
 }
 
+/* ── Rich Text Helper (Strapi Blocks) ────────────────────────── */
+const extractText = (val: any): string => {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (Array.isArray(val)) {
+    return val.map(node => {
+      if (node.children) return extractText(node.children);
+      if (node.text) return node.text;
+      return '';
+    }).join(' ');
+  }
+  return '';
+};
+
 /* ── Tháng Can Chi ────────────────────────────────────────────── */
 const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
 const CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
@@ -157,10 +177,11 @@ interface DayCellProps {
   solarYear: number;
   isToday: boolean;
   isCurrentMonth: boolean;
+  allEvents: SpecialDay[];
   onClick: () => void;
 }
 
-function DayCell({ solarDay, solarMonth, solarYear, isToday, isCurrentMonth, onClick }: DayCellProps) {
+function DayCell({ solarDay, solarMonth, solarYear, isToday, isCurrentMonth, allEvents, onClick }: DayCellProps) {
   const [lunar, setLunar] = useState<LunarInfo | null>(null);
   const [markers, setMarkers] = useState<SpecialDay[]>([]);
 
@@ -170,9 +191,15 @@ function DayCell({ solarDay, solarMonth, solarYear, isToday, isCurrentMonth, onC
       if (cancelled) return;
       setLunar(l);
       // Tìm ngày đặc biệt
-      const found = SPECIAL_DAYS.filter(
-        (s) => s.lunarMonth === l.lunarMonth && s.lunarDay === l.lunarDay
-      );
+      const found = allEvents.filter((s) => {
+        // Nếu là sự kiện Dương lịch (cố định theo ngày tháng năm)
+        if (s.solarDate && !s.isRecurringLunar) {
+          const solarStr = `${solarYear}-${solarMonth.toString().padStart(2, '0')}-${solarDay.toString().padStart(2, '0')}`;
+          return s.solarDate.startsWith(solarStr);
+        }
+        // Tiếp theo mới xét đến sự kiện Âm lịch (lặp lại hàng năm)
+        return s.lunarMonth === l.lunarMonth && s.lunarDay === l.lunarDay;
+      });
       // Ngày trai
       if (FAST_DAYS_LUNAR.includes(l.lunarDay)) {
         found.push({ lunarMonth: l.lunarMonth, lunarDay: l.lunarDay, name: `Ngày ${l.lunarDay === 1 ? 'Mùng 1' : l.lunarDay === 15 ? 'Rằm' : `Trai ${l.lunarDay}`}`, type: 'fast', description: 'Ngày trai — ăn chay, niệm kinh nhiều hơn.', icon: Leaf });
@@ -180,7 +207,7 @@ function DayCell({ solarDay, solarMonth, solarYear, isToday, isCurrentMonth, onC
       setMarkers(found);
     });
     return () => { cancelled = true; };
-  }, [solarDay, solarMonth, solarYear]);
+  }, [solarDay, solarMonth, solarYear, allEvents]);
 
   const isSpecial = markers.length > 0;
 
@@ -296,7 +323,14 @@ function DayDrawer({ detail, onClose }: { detail: DayDetail | null; onClose: () 
                         <m.icon className={`w-5 h-5 ${style.text}`} />
                         <h3 className={`text-sm font-semibold ${style.text}`}>{m.name}</h3>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{m.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {m.description}
+                      </p>
+                      {m.reciteCount && m.reciteCount > 0 && (
+                        <p className={`text-xs mt-2 font-bold ${style.text}`}>
+                          Số biến Lễ Phật Đại Sám Hối Văn (khuyến nghị): {m.reciteCount} lần
+                        </p>
+                      )}
                       {m.teachingSlug && (
                         <a
                           href={`/teachings/${m.teachingSlug}`}
@@ -345,9 +379,38 @@ export default function LunarCalendarPage() {
   const [todayLunar, setTodayLunar] = useState<LunarInfo | null>(null);
   const [upcomingMarkers, setUpcomingMarkers] = useState<Array<{ date: string; items: SpecialDay[] }>>([]);
 
+  const [adminEvents, setAdminEvents] = useState<SpecialDay[]>([]);
+  const allEvents = useMemo(() => [...SPECIAL_DAYS, ...adminEvents], [adminEvents]);
+
   useEffect(() => {
     const today = new Date();
     solarToLunar(today.getFullYear(), today.getMonth() + 1, today.getDate()).then(setTodayLunar);
+
+    // Lấy sự kiện từ CMS
+    fetchLunarEvents().then(events => {
+      const getIcon = (t: string) => {
+        if (t === 'buddha') return Sparkles;
+        if (t === 'bodhisattva') return Flower2;
+        if (t === 'teacher') return ScrollText;
+        if (t === 'fast') return Leaf;
+        return PartyPopper;
+      };
+
+      const mapped: SpecialDay[] = events.map(e => ({
+        lunarMonth: e.lunarMonth || 1,
+        lunarDay: e.lunarDay || 1,
+        solarDate: e.solarDate || undefined,
+        isRecurringLunar: e.isRecurringLunar,
+        name: e.title,
+        type: e.eventType || 'normal',
+        reciteCount: e.reciteCount,
+        description: extractText(e.todoList) || extractText(e.teachings) || 'Tự giác thực hành theo lời Phật dạy',
+        icon: getIcon(e.eventType)
+      }));
+      console.log("[LunarCalendar] Events loaded:", mapped.length);
+      console.table(mapped);
+      setAdminEvents(mapped);
+    });
   }, []);
 
   // Build upcoming events (next 60 days)
@@ -360,7 +423,13 @@ export default function LunarCalendarPage() {
         d.setDate(today.getDate() + i);
         const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
         const lunar = await solarToLunar(y, m, day);
-        const found = SPECIAL_DAYS.filter((s) => s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay && s.type !== 'fast');
+        const found = allEvents.filter((s) => {
+          if (s.solarDate && !s.isRecurringLunar) {
+            const solarStr = `${y}-${m.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            return s.solarDate.startsWith(solarStr);
+          }
+          return s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay && s.type !== 'fast';
+        });
         if (found.length > 0) {
           result.push({ date: `${day}/${m}/${y}`, items: found });
           if (result.length >= 5) break;
@@ -368,8 +437,8 @@ export default function LunarCalendarPage() {
       }
       setUpcomingMarkers(result);
     };
-    run();
-  }, []);
+    if (allEvents.length) run();
+  }, [allEvents]);
 
   // Build calendar grid
   const calendarDays = useMemo(() => {
@@ -416,7 +485,13 @@ export default function LunarCalendarPage() {
 
   const handleCellClick = async (day: number, month: number, year: number) => {
     const lunar = await solarToLunar(year, month, day);
-    const markers = SPECIAL_DAYS.filter((s) => s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay);
+    const markers = allEvents.filter((s) => {
+      if (s.solarDate && !s.isRecurringLunar) {
+        const solarStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        return s.solarDate.startsWith(solarStr);
+      }
+      return s.lunarMonth === lunar.lunarMonth && s.lunarDay === lunar.lunarDay;
+    });
     if (FAST_DAYS_LUNAR.includes(lunar.lunarDay)) {
       markers.push({ lunarMonth: lunar.lunarMonth, lunarDay: lunar.lunarDay, name: `Ngày ${lunar.lunarDay === 1 ? 'Mùng 1' : lunar.lunarDay === 15 ? 'Rằm' : `${lunar.lunarDay}`} — Ngày Trai`, type: 'fast', description: 'Ăn chay, niệm kinh gấp đôi, phóng sinh nếu có thể.', icon: Leaf });
     }
@@ -516,6 +591,7 @@ export default function LunarCalendarPage() {
                     solarYear={cell.year}
                     isToday={isToday(cell.day, cell.month, cell.year)}
                     isCurrentMonth={cell.current}
+                    allEvents={allEvents}
                     onClick={() => handleCellClick(cell.day, cell.month, cell.year)}
                   />
                 ))}

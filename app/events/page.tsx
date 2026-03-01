@@ -107,14 +107,11 @@ export default function EventsPage() {
             {filtered.map((event) => (
               <motion.div key={event.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: event.id * 0.03 }} className={`rounded-xl border p-5 transition-all ${event.status === "past" ? "bg-card/50 border-border/50" : "bg-card border-border hover:border-gold/20"}`}>
                 <div className="flex flex-col md:flex-row md:items-start gap-4">
-                  <div className="w-16 h-16 rounded-xl bg-secondary flex flex-col items-center justify-center shrink-0">
-                    <span className="text-gold mb-1">
-                      {(() => {
-                        const Icon = typeLabels[event.type].icon;
-                        return <Icon className="w-6 h-6" />;
-                      })()}
-                    </span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{event.date.split("/")[0]} Th.{event.date.split("/")[1]}</span>
+                  <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center shrink-0 text-gold">
+                    {(() => {
+                      const Icon = typeLabels[event.type].icon;
+                      return <Icon className="w-6 h-6" />;
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">

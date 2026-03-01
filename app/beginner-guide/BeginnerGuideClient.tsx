@@ -8,7 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StickyBanner from "@/components/StickyBanner";
 import { ArrowRightIcon } from "@/components/icons/ZenIcons";
-import { getStrapiMediaUrl } from "@/lib/strapi";
+import { resolveUrl } from "@/lib/strapi-client";
 import type { BeginnerGuide, StrapiMedia } from "@/types/strapi";
 
 const DownloadIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -120,7 +120,7 @@ export default function BeginnerGuideClient({ initialGuides }: { initialGuides: 
                                 {step.images && step.images.length > 0 && (
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     {step.images.map((img: StrapiMedia) => {
-                                      const imgUrl = getStrapiMediaUrl(img.formats?.large?.url || img.formats?.medium?.url || img.url);
+                                      const imgUrl = resolveUrl(img.formats?.large?.url || img.formats?.medium?.url || img.url);
                                       if (!imgUrl) return null;
                                       return (
                                         <div key={img.id} className="relative aspect-auto rounded-lg overflow-hidden border border-border/50 bg-secondary">

@@ -141,12 +141,89 @@ export interface BeginnerGuide {
   title: string
   description: string | null
   content: string | null // rich text
+  details: string[] | null // chi tiết từng bước
   duration: string | null
   order: number
+  step_number: number
+  guide_type: 'so-hoc' | 'kinh-bai-tap'
+  icon: string | null // tên icon Lucide (vd: 'BookOpen')
+  pdf_url: string | null
+  video_url: string | null
   images: StrapiMedia[] | null
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+// ─── Homepage Dynamic Content ────────────────────────────────
+
+export interface HeroSlide {
+  src: string
+  title: string
+  highlight: string
+  sub: string
+}
+
+export interface StatItem {
+  value: string
+  label: string
+  detail: string
+}
+
+export interface PhapBaoItem {
+  id: string
+  title: string
+  chinese: string
+  color: string
+  borderColor: string
+  description: string
+  link: string
+  iconType: string // tên icon SVG key
+}
+
+export interface ActionCardItem {
+  title: string
+  description: string
+  link: string
+  iconType: string
+}
+
+export interface VideoItem {
+  id: string
+  title: string
+  subtitle: string
+  description: string
+  youtubeId: string
+  duration: string
+  category: string
+}
+
+export interface AwardItem {
+  year: string
+  title: string
+  org: string
+  description: string
+}
+
+export interface GallerySlide {
+  src: string
+  caption: string
+  subcap: string
+}
+
+export interface SearchCategoryItem {
+  id: number
+  title: string
+  iconName: string // tên Lucide icon
+  link: string
+}
+
+export interface StickyBannerConfig {
+  title: string
+  subtitle: string
+  buttonText: string
+  buttonLink: string
+  enabled: boolean
 }
 
 /** Site title/SEO settings */
@@ -168,7 +245,7 @@ export interface SocialLinks {
   telegram?: string
 }
 
-/** Settings single type */
+/** Settings single type — bao gồm cả nội dung động trang chủ */
 export interface SiteSetting {
   id: number
   documentId: string
@@ -180,6 +257,16 @@ export interface SiteSetting {
   contactPhone: string | null
   address: string | null
   footerText: string | null
+  // ── Homepage Dynamic Content ──
+  heroSlides: HeroSlide[] | null
+  stats: StatItem[] | null
+  phapBao: PhapBaoItem[] | null
+  actionCards: ActionCardItem[] | null
+  featuredVideos: VideoItem[] | null
+  awards: AwardItem[] | null
+  gallerySlides: GallerySlide[] | null
+  searchCategories: SearchCategoryItem[] | null
+  stickyBanner: StickyBannerConfig | null
   createdAt: string
   updatedAt: string
 }

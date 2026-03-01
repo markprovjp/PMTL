@@ -3,22 +3,10 @@
 //  Client functions cho Community Posts & Comments
 // ─────────────────────────────────────────────────────────────
 
-const API = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'
+import { buildAuthHeaders as authHeaders, resolveUrl, STRAPI_API as API } from '@/lib/strapi-client'
 
-function getToken() {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_token')
-}
-
-function authHeaders(): HeadersInit {
-  const token = getToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-function imgUrl(media: any): string {
-  if (!media) return ''
-  const url = media?.url || media?.data?.attributes?.url || ''
-  return url.startsWith('http') ? url : `${API}${url}`
+function imgUrl(media: unknown): string {
+  return resolveUrl(media) ?? ''
 }
 
 /* ── Types ──────────────────────────────────────────────────── */
@@ -29,12 +17,12 @@ export interface CommunityPost {
   content: string
   type: 'story' | 'feedback' | 'video'
   category: string
-  cover_image: any
+  cover_image: unknown
   video_url?: string
   author_name: string
   author_avatar?: string
   author_country?: string
-  author?: any
+  author?: unknown
   likes: number
   views: number
   rating?: number
@@ -55,7 +43,7 @@ export interface CommunityComment {
   author_country?: string
   likes: number
   createdAt: string
-  parent_comment?: any
+  parent_comment?: unknown
 }
 
 /* ── Helpers ─────────────────────────────────────────────────── */

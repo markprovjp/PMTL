@@ -1,35 +1,13 @@
 'use client'
 
 import { motion } from "framer-motion";
+import type { AwardItem } from "@/types/strapi";
 
-const awards = [
-  {
-    year: "2014",
-    title: "Giải Peace & Philanthropy Award",
-    org: "House of Lords, UK Parliament",
-    description: "Vinh danh đóng góp cho hòa bình và từ thiện quốc tế.",
-  },
-  {
-    year: "2013",
-    title: "World Peace Award",
-    org: "Simon Wiesenthal Centre — Museum of Tolerance",
-    description: "Giải thưởng Hòa bình Thế giới tại Los Angeles, Hoa Kỳ.",
-  },
-  {
-    year: "2015",
-    title: "Certificate of Appreciation",
-    org: "United Nations — UNESCO",
-    description: "Chứng nhận đóng góp cho văn hóa, giáo dục và hòa bình.",
-  },
-  {
-    year: "2012",
-    title: "Community Service Excellence",
-    org: "Liên đoàn Phật giáo Úc",
-    description: "Vinh danh hoạt động phục vụ cộng đồng Phật tử tại Australia.",
-  },
-];
+interface AwardsSectionProps {
+  awards: AwardItem[]
+}
 
-const AwardsSection = () => {
+const AwardsSection = ({ awards }: AwardsSectionProps) => {
   return (
     <section className="py-16 px-6">
       <div className="container mx-auto">

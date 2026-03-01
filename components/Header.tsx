@@ -31,7 +31,7 @@ const NavDropdown = ({ label, items, isOpen, onToggle, onClose }: {
   <div className="relative group">
     <button
       onClick={onToggle}
-      className={`px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${isOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
+      className={`px-2 lg:px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${isOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
     >
       {label}
       <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
@@ -76,6 +76,7 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
       label: "Tu Học",
       items: [
         { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
+        { label: "Kinh Bài Tập Hằng Ngày", href: "/daily-recitation" },
         { label: "Hỏi Đáp Phật Học", href: "/qa" },
         { label: "Thư Viện Kinh Sách", href: "/library" },
         { label: "Phim Truyện & Video", href: "/videos" },
@@ -98,7 +99,7 @@ const MobileMenu = ({ onClose }: { onClose: () => void }) => {
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "tween", duration: 0.3 }}
-      className="fixed inset-0 z-50 bg-background overflow-y-auto"
+      className="fixed inset-0 z-[100] bg-background overflow-y-auto"
     >
       <div className="flex items-center justify-between p-6 border-b border-border">
         <Link href="/" onClick={onClose} className="flex items-center gap-2">
@@ -206,6 +207,7 @@ const Header = () => {
   const groups = {
     tuHoc: [
       { label: "Hướng Dẫn Sơ Học", href: "/beginner-guide" },
+      { label: "Kinh Bài Tập Hằng Ngày", href: "/daily-recitation" },
       { label: "Hỏi Đáp Phật Học", href: "/qa" },
       { label: "Thư Viện Kinh Sách", href: "/library" },
       { label: "Phim Truyện & Video", href: "/videos" },
@@ -235,20 +237,20 @@ const Header = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              <Link href="/" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+            <nav className="hidden md:flex items-center gap-0.5 lg:gap-1">
+              <Link href="/" className="px-2 lg:px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Trang Chủ
               </Link>
 
-              <Link href="/blog" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+              <Link href="/blog" className="px-2 lg:px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Khai Thị (Blog)
               </Link>
 
-              <Link href="/lunar-calendar" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+              <Link href="/lunar-calendar" className="px-2 lg:px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Lịch Tu Học
               </Link>
 
-              <Link href="/shares" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+              <Link href="/shares" className="px-2 lg:px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Diễn Đàn Đồng Tu
               </Link>
 
@@ -262,7 +264,7 @@ const Header = () => {
 
               <button
                 onClick={() => { setCategoryOpen(!categoryOpen); setActiveDropdown(null); }}
-                className={`px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
+                className={`px-2 lg:px-3 py-2.5 text-xs font-medium tracking-wide transition-colors flex items-center gap-1.5 ${categoryOpen ? "text-gold" : "text-muted-foreground hover:text-gold"}`}
               >
                 Khai Thị
                 <motion.span animate={{ rotate: categoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}><ChevronDown /></motion.span>
@@ -276,7 +278,7 @@ const Header = () => {
                 onClose={() => setActiveDropdown(null)}
               />
 
-              <Link href="/donations" className="px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
+              <Link href="/donations" className="px-2 lg:px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-gold transition-colors">
                 Hộ Trì
               </Link>
             </nav>
